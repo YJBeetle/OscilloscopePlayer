@@ -23,9 +23,6 @@ void VideoViewer::paintEvent(QPaintEvent *event)
     if(this->image)
         painter.drawImage(0, 0, *this->image);
 
-    if(this->pixmap)
-        painter.drawPixmap(0, 0, *this->pixmap);
-
     //painter.restore();
 
     qDebug() << "VideoViewer::paintEvent";

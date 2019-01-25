@@ -46,12 +46,6 @@ void MainWindow::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
            free it */
         //snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
 
-//        auto pixmap = new QPixmap(frame->width, frame->height);
-//        pixmap->fill(Qt::blue);
-//        pixmap->loadFromData(frame->data[0], 100000);
-//        if(this->ui->videoViewer->pixmap) delete this->ui->videoViewer->pixmap;
-//        this->ui->videoViewer->pixmap = pixmap;
-
         auto image = new QImage(frame->width, frame->height, QImage::Format_RGB32);
         for (int y = 0; y < frame->height; y++)
         {
@@ -68,10 +62,6 @@ void MainWindow::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
         this->ui->videoViewer->update();
 //        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
         QCoreApplication::processEvents();
-
-
-
-
     }
 }
 

@@ -13,7 +13,6 @@ public:
     ~VideoViewer();
 
     QImage *image = nullptr;
-    QPixmap *pixmap = nullptr;
 
 signals:
 
