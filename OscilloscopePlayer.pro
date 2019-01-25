@@ -34,6 +34,11 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
+INCLUDEPATH += /usr/local/include
+LIBPATH += /usr/local/lib
+
+LIBS += -lavcodec
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
