@@ -39,7 +39,7 @@ FORMS += \
 INCLUDEPATH += /usr/local/include
 LIBPATH += /usr/local/lib
 
-LIBS += -lavcodec
+LIBS += -lavformat -lavcodec -lavutil
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
