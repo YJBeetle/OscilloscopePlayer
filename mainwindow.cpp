@@ -254,7 +254,7 @@ void MainWindow::on_pushButtonOpen_clicked()
     QString path = QFileDialog::getOpenFileName(this,
                                                 tr("Open"),
                                                 "",
-                                                tr("MPEG Video(*.mpg);;Allfile(*.*)"));
+                                                tr("MPEG Video(*.mp4 *.mov *.mpg *.m4v *.avi *.flv *.rm *.rmvb);;Allfile(*.*)"));
     if(!path.isEmpty()){
         qDebug() << path;
 
