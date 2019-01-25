@@ -24,10 +24,12 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_clicked();
+    void on_pushButtonOpen_clicked();
 
 private:
     Ui::MainWindow *ui;
+
+    void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt);
 };
 
 #endif // MAINWINDOW_H

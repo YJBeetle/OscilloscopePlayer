@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>365</width>
-    <height>252</height>
+    <width>845</width>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="pushButtonOpen">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>10</y>
+      <x>50</x>
+      <y>490</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -27,9 +27,30 @@
      <string>Open</string>
     </property>
    </widget>
+   <widget class="VideoViewer" name="videoViewer" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>611</width>
+      <height>400</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background:rgb(0, 0, 0)</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>VideoViewer</class>
+   <extends>QWidget</extends>
+   <header>videoviewer.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

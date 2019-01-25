@@ -22,19 +22,8 @@ MainWindow::~MainWindow()
 
 
 
-static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize)
-{
-    FILE *f;
-    int i;
-//    f = fopen(filename,"w");
-//    fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
-//    for (i = 0; i < ysize; i++)
-//        fwrite(buf + i * wrap, 1, xsize, f);
-//    fclose(f);
 
-
-}
-static void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
+void MainWindow::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
 {
     int ret;
     ret = avcodec_send_packet(dec_ctx, pkt);
@@ -50,12 +39,39 @@ static void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
             fprintf(stderr, "Error during decoding\n");
             exit(1);
         }
-        printf("saving frame %3d\n", dec_ctx->frame_number);
-        fflush(stdout);
+
+        //printf("saving frame %3d\n", dec_ctx->frame_number);
+        //fflush(stdout);
         /* the picture is allocated by the decoder. no need to
            free it */
-//        snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
-        pgm_save(frame->data[0], frame->linesize[0], frame->width, frame->height);
+        //snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
+
+//        auto pixmap = new QPixmap(frame->width, frame->height);
+//        pixmap->fill(Qt::blue);
+//        pixmap->loadFromData(frame->data[0], 100000);
+//        if(this->ui->videoViewer->pixmap) delete this->ui->videoViewer->pixmap;
+//        this->ui->videoViewer->pixmap = pixmap;
+
+        auto image = new QImage(frame->width, frame->height, QImage::Format_RGB32);
+        for (int y = 0; y < frame->height; y++)
+        {
+            for(int x = 0; x < frame->width; x++)
+            {
+                int s = y * frame->linesize[0] + x;
+                QColor color(frame->data[0][s], frame->data[0][s+1], frame->data[0][s+2], frame->data[0][s+3]);
+                image->setPixelColor(x, y, color);
+            }
+        }
+        if(this->ui->videoViewer->image) delete this->ui->videoViewer->image;
+        this->ui->videoViewer->image = image;
+
+        this->ui->videoViewer->update();
+//        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+        QCoreApplication::processEvents();
+
+
+
+
     }
 }
 
@@ -64,7 +80,7 @@ static void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
 
 
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_pushButtonOpen_clicked()
 {
     QString path = QFileDialog::getOpenFileName(this,
                                                 tr("Open"),
@@ -142,11 +158,11 @@ void MainWindow::on_pushButton_clicked()
                 data      += ret;
                 data_size -= ret;
                 if (pkt->size)
-                    decode(c, frame, pkt);
+                    this->decode(c, frame, pkt);
             }
         }
         /* flush the decoder */
-        decode(c, frame, NULL);
+        this->decode(c, frame, NULL);
         fclose(f);
         av_parser_close(parser);
         avcodec_free_context(&c);
