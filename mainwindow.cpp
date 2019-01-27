@@ -7,7 +7,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
 }
 
 MainWindow::~MainWindow()
@@ -134,6 +133,16 @@ int MainWindow::decode_packet(int *got_frame, int cached)
 //            fwrite(frame->extended_data[0], 1, unpadded_linesize, audio_dst_file);
 
 
+memset(play_buf, sizeof(uint8_t), out_size);
+
+            swr_convert(pSwrCtx, &play_buf , out_size, (const uint8_t**)frame->data, frame->nb_samples);
+
+
+            out->write((char*)play_buf, out_size);
+
+
+
+            QTest::qSleep( 30 );
 
 
 
@@ -265,6 +274,34 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 
 
+        format.setSampleRate(48000);
+        format.setChannelCount(2);
+        format.setCodec("audio/pcm");
+        format.setSampleType(QAudioFormat::SignedInt);
+        format.setSampleSize(16);
+        format.setByteOrder(QAudioFormat::LittleEndian);
+
+        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+        if (!info.isFormatSupported(format)) {
+            qDebug() << "Raw audio format not supported by backend, cannot play audio.";
+            return;
+        }
+
+
+        audio = new QAudioOutput(format, this);
+        out = audio->start();
+
+        play_buf = (uint8_t*)av_malloc(out_size);
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -307,6 +344,26 @@ void MainWindow::on_pushButtonOpen_clicked()
         }
         if (open_codec_context(&audio_stream_idx, &audio_dec_ctx, fmt_ctx, AVMEDIA_TYPE_AUDIO) >= 0) {
             audio_stream = fmt_ctx->streams[audio_stream_idx];
+
+
+
+
+
+
+            //音频
+            pSwrCtx = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 48000, audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);
+            if(!pSwrCtx)
+            {
+                fprintf(stderr,"Could not set options for resample context.\n");
+                return;
+            }
+            swr_init(pSwrCtx);
+
+
+
+
+
+
 //            audio_dst_file = fopen(audio_dst_filename, "wb");
 //            if (!audio_dst_file) {
 //                fprintf(stderr, "Could not open destination file %s\n", audio_dst_filename);
@@ -314,6 +371,7 @@ void MainWindow::on_pushButtonOpen_clicked()
 //                goto end;
 //            }
         }
+
         /* dump input information to stderr */
         av_dump_format(fmt_ctx, 0, src_filename, 0);
         if (!audio_stream && !video_stream) {

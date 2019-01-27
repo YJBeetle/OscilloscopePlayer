@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui multimedia testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -39,7 +39,7 @@ FORMS += \
 INCLUDEPATH += /usr/local/include
 LIBPATH += /usr/local/lib
 
-LIBS += -lavformat -lavcodec -lavutil
+LIBS += -lavformat -lavcodec -lavutil -lswresample
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

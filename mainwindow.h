@@ -4,6 +4,10 @@
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QDebug>
+#include <QTest>
+#include <QAudioOutput>
+#include <QAudioDeviceInfo>
+#include <QAudioFormat>
 
 extern "C"
 {
@@ -11,30 +15,11 @@ extern "C"
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
 
-static AVFormatContext *fmt_ctx = NULL;
-static AVCodecContext *video_dec_ctx = NULL, *audio_dec_ctx;
-static int vwidth, vheight;
-static enum AVPixelFormat pix_fmt;
-static AVStream *video_stream = NULL, *audio_stream = NULL;
-static const char *src_filename = NULL;
-//static const char *video_dst_filename = NULL;
-//static const char *audio_dst_filename = NULL;
-//static FILE *video_dst_file = NULL;
-//static FILE *audio_dst_file = NULL;
-static uint8_t *video_dst_data[4] = {NULL};
-static int      video_dst_linesize[4];
-static int video_dst_bufsize;
-static int video_stream_idx = -1, audio_stream_idx = -1;
-static AVFrame *frame = NULL;
-static AVPacket pkt;
-static int video_frame_count = 0;
-static int audio_frame_count = 0;
-/* Enable or disable frame reference counting. You are not supposed to support
- * both paths in your application but pick the one most appropriate to your
- * needs. Look for the use of refcount in this example to see what are the
- * differences of API usage between them. */
-static int refcount = 0;
+
+
+#define MAX_AUDIO_FRAME_SIZE    192000
 }
 
 namespace Ui {
@@ -54,6 +39,37 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    AVFormatContext *fmt_ctx = nullptr;
+    AVCodecContext *video_dec_ctx = nullptr, *audio_dec_ctx = nullptr;
+    int vwidth, vheight;
+    enum AVPixelFormat pix_fmt;
+    AVStream *video_stream = nullptr, *audio_stream = nullptr;
+    const char *src_filename = nullptr;
+    //const char *video_dst_filename = NULL;
+    //const char *audio_dst_filename = NULL;
+    //FILE *video_dst_file = NULL;
+    //FILE *audio_dst_file = NULL;
+    uint8_t *video_dst_data[4] = {nullptr};
+    int      video_dst_linesize[4];
+    int video_dst_bufsize;
+    int video_stream_idx = -1, audio_stream_idx = -1;
+    AVFrame *frame = nullptr;
+    AVPacket pkt;
+    int video_frame_count = 0;
+    int audio_frame_count = 0;
+    /* Enable or disable frame reference counting. You are not supposed to support
+     * both paths in your application but pick the one most appropriate to your
+     * needs. Look for the use of refcount in this example to see what are the
+     * differences of API usage between them. */
+    int refcount = 0;
+
+    QAudioFormat format;
+    QAudioOutput *audio = nullptr;
+    QIODevice *out = nullptr;
+    SwrContext *pSwrCtx = nullptr;
+    int out_size = MAX_AUDIO_FRAME_SIZE*2;
+    uint8_t *play_buf = nullptr;
 
     int decode_packet(int *got_frame, int cached);
     int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type);
