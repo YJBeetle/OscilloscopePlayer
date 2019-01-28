@@ -27,11 +27,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    videoviewer.cpp
+    videoviewer.cpp \
+    decode.cpp
 
 HEADERS += \
         mainwindow.h \
-    videoviewer.h
+    videoviewer.h \
+    decode.h
 
 FORMS += \
         mainwindow.ui
