@@ -461,3 +461,116 @@ void MainWindow::on_pushButtonOpen_clicked()
 
     }
 }
+
+void MainWindow::on_pushButton_clicked()
+{
+
+    format.setSampleRate(96000);
+    format.setChannelCount(2);
+    format.setCodec("audio/pcm");
+    format.setSampleType(QAudioFormat::SignedInt);
+    format.setSampleSize(8);
+    format.setByteOrder(QAudioFormat::LittleEndian);
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format)) {
+        qDebug() << "Raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
+
+    audio = new QAudioOutput(format, this);
+    out = audio->start();
+
+
+
+    play_buf = (uint8_t*)av_malloc(out_size);
+
+
+    memset(play_buf, sizeof(uint8_t), out_size);
+
+    while(1){
+
+
+        QCoreApplication::processEvents();
+
+
+
+        play_buf[0x00]=0x00;
+        play_buf[0x02]=0x10;
+        play_buf[0x04]=0x20;
+        play_buf[0x06]=0x30;
+        play_buf[0x08]=0x40;
+        play_buf[0x0a]=0x50;
+        play_buf[0x0c]=0x60;
+        play_buf[0x0e]=0x70;
+        play_buf[0x10]=0x70;
+        play_buf[0x12]=0x60;
+        play_buf[0x14]=0x50;
+        play_buf[0x16]=0x40;
+        play_buf[0x18]=0x30;
+        play_buf[0x1a]=0x20;
+        play_buf[0x1c]=0x10;
+        play_buf[0x1e]=0x00;
+        play_buf[0x20]=0xf0;
+        play_buf[0x22]=0xe0;
+        play_buf[0x24]=0xd0;
+        play_buf[0x26]=0xc0;
+        play_buf[0x28]=0xb0;
+        play_buf[0x2a]=0xa0;
+        play_buf[0x2c]=0x90;
+        play_buf[0x2e]=0x80;
+        play_buf[0x30]=0x80;
+        play_buf[0x32]=0x90;
+        play_buf[0x34]=0xa0;
+        play_buf[0x36]=0xb0;
+        play_buf[0x38]=0xc0;
+        play_buf[0x3a]=0xd0;
+        play_buf[0x3c]=0xe0;
+        play_buf[0x3e]=0xf0;
+
+
+        play_buf[0x01]=0x70;
+        play_buf[0x03]=0x60;
+        play_buf[0x05]=0x50;
+        play_buf[0x07]=0x40;
+        play_buf[0x09]=0x30;
+        play_buf[0x0b]=0x20;
+        play_buf[0x0d]=0x10;
+        play_buf[0x0f]=0x00;
+        play_buf[0x11]=0xf0;
+        play_buf[0x13]=0xe0;
+        play_buf[0x15]=0xd0;
+        play_buf[0x17]=0xc0;
+        play_buf[0x19]=0xb0;
+        play_buf[0x1b]=0xa0;
+        play_buf[0x1d]=0x90;
+        play_buf[0x1f]=0x80;
+        play_buf[0x21]=0x80;
+        play_buf[0x23]=0x90;
+        play_buf[0x25]=0xa0;
+        play_buf[0x27]=0xb0;
+        play_buf[0x29]=0xc0;
+        play_buf[0x2b]=0xd0;
+        play_buf[0x2d]=0xe0;
+        play_buf[0x2f]=0xf0;
+        play_buf[0x31]=0x00;
+        play_buf[0x33]=0x10;
+        play_buf[0x35]=0x20;
+        play_buf[0x37]=0x30;
+        play_buf[0x39]=0x40;
+        play_buf[0x3b]=0x50;
+        play_buf[0x3d]=0x60;
+        play_buf[0x3f]=0x70;
+
+
+
+
+        out->write((char*)play_buf, 64);
+
+
+    }
+
+
+
+}
