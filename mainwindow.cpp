@@ -462,7 +462,7 @@ void MainWindow::on_pushButtonOpen_clicked()
     }
 }
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_pushButtonTest_clicked()
 {
 
     format.setSampleRate(96000);
