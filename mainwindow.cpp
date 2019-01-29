@@ -473,13 +473,25 @@ void MainWindow::on_pushButton_clicked()
     format.setByteOrder(QAudioFormat::LittleEndian);
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+
+    qDebug()<<info.deviceName();
+
+    int i = 0;
+    foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+    {
+        if(i == 4)
+        info = deviceInfo;
+        i++;
+        qDebug() << "Device name: " << deviceInfo.deviceName();
+    }
+
     if (!info.isFormatSupported(format)) {
         qDebug() << "Raw audio format not supported by backend, cannot play audio.";
         return;
     }
 
 
-    audio = new QAudioOutput(format, this);
+    audio = new QAudioOutput(info, format, this);
     out = audio->start();
 
 
