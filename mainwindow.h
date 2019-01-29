@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QDebug>
 #include <QTest>
 #include <QAudioOutput>
@@ -75,6 +76,19 @@ private:
 
     int decode_packet(int *got_frame, int cached);
     int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx, enum AVMediaType type);
+
+
+
+
+
+
+    QAudioFormat oscilloscopeFormat;
+    QAudioOutput* oscilloscopeOutput = nullptr;
+    QIODevice* oscilloscopeDevice = nullptr;
+    unsigned int oscilloscopeBufSize = 0;
+    char* oscilloscopeBuf = nullptr;
+
+
 };
 
 #endif // MAINWINDOW_H

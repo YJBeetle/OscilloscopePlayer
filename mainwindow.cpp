@@ -465,16 +465,14 @@ void MainWindow::on_pushButtonOpen_clicked()
 void MainWindow::on_pushButtonTest_clicked()
 {
 
-    format.setSampleRate(96000);
-    format.setChannelCount(2);
-    format.setCodec("audio/pcm");
-    format.setSampleType(QAudioFormat::SignedInt);
-    format.setSampleSize(8);
-    format.setByteOrder(QAudioFormat::LittleEndian);
+    oscilloscopeFormat.setSampleRate(96000);
+    oscilloscopeFormat.setChannelCount(2);
+    oscilloscopeFormat.setCodec("audio/pcm");
+    oscilloscopeFormat.setSampleType(QAudioFormat::SignedInt);
+    oscilloscopeFormat.setSampleSize(8);
+    oscilloscopeFormat.setByteOrder(QAudioFormat::LittleEndian);
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-
-    qDebug()<<info.deviceName();
 
     int i = 0;
     foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
@@ -485,101 +483,92 @@ void MainWindow::on_pushButtonTest_clicked()
         qDebug() << "Device name: " << deviceInfo.deviceName();
     }
 
-    if (!info.isFormatSupported(format)) {
-        qDebug() << "Raw audio format not supported by backend, cannot play audio.";
+    if (!info.isFormatSupported(oscilloscopeFormat)) {
+        QMessageBox msgBox;
+        msgBox.setText("所选输出设备不支持此设置。");
+        msgBox.exec();
         return;
     }
 
+    oscilloscopeOutput = new QAudioOutput(info, oscilloscopeFormat, this);
+    oscilloscopeDevice = oscilloscopeOutput->start();
 
-    audio = new QAudioOutput(info, format, this);
-    out = audio->start();
+    oscilloscopeBufSize = 96000 / 20;
 
-
-
-    play_buf = (uint8_t*)av_malloc(out_size);
-
-
-    memset(play_buf, sizeof(uint8_t), out_size);
+    oscilloscopeBuf = new char[oscilloscopeBufSize];
+    memset(oscilloscopeBuf, 0, oscilloscopeBufSize);
 
     while(1){
 
+        oscilloscopeBuf[0x00]=0x00;
+        oscilloscopeBuf[0x02]=0x10;
+        oscilloscopeBuf[0x04]=0x20;
+        oscilloscopeBuf[0x06]=0x30;
+        oscilloscopeBuf[0x08]=0x40;
+        oscilloscopeBuf[0x0a]=0x50;
+        oscilloscopeBuf[0x0c]=0x60;
+        oscilloscopeBuf[0x0e]=0x70;
+        oscilloscopeBuf[0x10]=0x79;
+        oscilloscopeBuf[0x12]=0x70;
+        oscilloscopeBuf[0x14]=0x60;
+        oscilloscopeBuf[0x16]=0x50;
+        oscilloscopeBuf[0x18]=0x40;
+        oscilloscopeBuf[0x1a]=0x30;
+        oscilloscopeBuf[0x1c]=0x20;
+        oscilloscopeBuf[0x1e]=0x10;
+        oscilloscopeBuf[0x20]=-0x00;
+        oscilloscopeBuf[0x22]=-0x10;
+        oscilloscopeBuf[0x24]=-0x20;
+        oscilloscopeBuf[0x26]=-0x30;
+        oscilloscopeBuf[0x28]=-0x40;
+        oscilloscopeBuf[0x2a]=-0x50;
+        oscilloscopeBuf[0x2c]=-0x60;
+        oscilloscopeBuf[0x2e]=-0x70;
+        oscilloscopeBuf[0x30]=-0x80;
+        oscilloscopeBuf[0x32]=-0x70;
+        oscilloscopeBuf[0x34]=-0x60;
+        oscilloscopeBuf[0x36]=-0x50;
+        oscilloscopeBuf[0x38]=-0x40;
+        oscilloscopeBuf[0x3a]=-0x30;
+        oscilloscopeBuf[0x3c]=-0x20;
+        oscilloscopeBuf[0x3e]=-0x10;
+
+        oscilloscopeBuf[0x01]=0x79;
+        oscilloscopeBuf[0x03]=0x70;
+        oscilloscopeBuf[0x05]=0x60;
+        oscilloscopeBuf[0x07]=0x50;
+        oscilloscopeBuf[0x09]=0x40;
+        oscilloscopeBuf[0x0b]=0x30;
+        oscilloscopeBuf[0x0d]=0x20;
+        oscilloscopeBuf[0x0f]=0x10;
+        oscilloscopeBuf[0x11]=-0x00;
+        oscilloscopeBuf[0x13]=-0x10;
+        oscilloscopeBuf[0x15]=-0x20;
+        oscilloscopeBuf[0x17]=-0x30;
+        oscilloscopeBuf[0x19]=-0x40;
+        oscilloscopeBuf[0x1b]=-0x50;
+        oscilloscopeBuf[0x1d]=-0x60;
+        oscilloscopeBuf[0x1f]=-0x70;
+        oscilloscopeBuf[0x21]=-0x80;
+        oscilloscopeBuf[0x23]=-0x70;
+        oscilloscopeBuf[0x25]=-0x60;
+        oscilloscopeBuf[0x27]=-0x50;
+        oscilloscopeBuf[0x29]=-0x40;
+        oscilloscopeBuf[0x2b]=-0x30;
+        oscilloscopeBuf[0x2d]=-0x20;
+        oscilloscopeBuf[0x2f]=-0x10;
+        oscilloscopeBuf[0x31]=0x00;
+        oscilloscopeBuf[0x33]=0x10;
+        oscilloscopeBuf[0x35]=0x20;
+        oscilloscopeBuf[0x37]=0x30;
+        oscilloscopeBuf[0x39]=0x40;
+        oscilloscopeBuf[0x3b]=0x50;
+        oscilloscopeBuf[0x3d]=0x60;
+        oscilloscopeBuf[0x3f]=0x70;
+
+        oscilloscopeDevice->write(oscilloscopeBuf, 64);
 
         QCoreApplication::processEvents();
-
-
-
-        play_buf[0x00]=0x00;
-        play_buf[0x02]=0x10;
-        play_buf[0x04]=0x20;
-        play_buf[0x06]=0x30;
-        play_buf[0x08]=0x40;
-        play_buf[0x0a]=0x50;
-        play_buf[0x0c]=0x60;
-        play_buf[0x0e]=0x70;
-        play_buf[0x10]=0x70;
-        play_buf[0x12]=0x60;
-        play_buf[0x14]=0x50;
-        play_buf[0x16]=0x40;
-        play_buf[0x18]=0x30;
-        play_buf[0x1a]=0x20;
-        play_buf[0x1c]=0x10;
-        play_buf[0x1e]=0x00;
-        play_buf[0x20]=0xf0;
-        play_buf[0x22]=0xe0;
-        play_buf[0x24]=0xd0;
-        play_buf[0x26]=0xc0;
-        play_buf[0x28]=0xb0;
-        play_buf[0x2a]=0xa0;
-        play_buf[0x2c]=0x90;
-        play_buf[0x2e]=0x80;
-        play_buf[0x30]=0x80;
-        play_buf[0x32]=0x90;
-        play_buf[0x34]=0xa0;
-        play_buf[0x36]=0xb0;
-        play_buf[0x38]=0xc0;
-        play_buf[0x3a]=0xd0;
-        play_buf[0x3c]=0xe0;
-        play_buf[0x3e]=0xf0;
-
-
-        play_buf[0x01]=0x70;
-        play_buf[0x03]=0x60;
-        play_buf[0x05]=0x50;
-        play_buf[0x07]=0x40;
-        play_buf[0x09]=0x30;
-        play_buf[0x0b]=0x20;
-        play_buf[0x0d]=0x10;
-        play_buf[0x0f]=0x00;
-        play_buf[0x11]=0xf0;
-        play_buf[0x13]=0xe0;
-        play_buf[0x15]=0xd0;
-        play_buf[0x17]=0xc0;
-        play_buf[0x19]=0xb0;
-        play_buf[0x1b]=0xa0;
-        play_buf[0x1d]=0x90;
-        play_buf[0x1f]=0x80;
-        play_buf[0x21]=0x80;
-        play_buf[0x23]=0x90;
-        play_buf[0x25]=0xa0;
-        play_buf[0x27]=0xb0;
-        play_buf[0x29]=0xc0;
-        play_buf[0x2b]=0xd0;
-        play_buf[0x2d]=0xe0;
-        play_buf[0x2f]=0xf0;
-        play_buf[0x31]=0x00;
-        play_buf[0x33]=0x10;
-        play_buf[0x35]=0x20;
-        play_buf[0x37]=0x30;
-        play_buf[0x39]=0x40;
-        play_buf[0x3b]=0x50;
-        play_buf[0x3d]=0x60;
-        play_buf[0x3f]=0x70;
-
-
-
-
-        out->write((char*)play_buf, 64);
-
 
     }
 
