@@ -474,30 +474,32 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 void MainWindow::on_pushButtonTest_clicked()
 {
-    if(oscilloscope.state())
-        oscilloscope.stop();
-    else
-        oscilloscope.test();
-}
+    if(oscilloscopeTest)
+    {
+        oscilloscopeTest->stop();
+        free(oscilloscopeTest);
+        oscilloscopeTest = nullptr;
+        ui->pushButtonTest->setText("测试输出");
+        return;
+    }
 
-void MainWindow::on_pushButtonSet_clicked()
-{
-    if(oscilloscope.set(audioDeviceInfoList[this->ui->comboBoxList->currentIndex()],
+    oscilloscopeTest = new Oscilloscope(audioDeviceInfoList[this->ui->comboBoxList->currentIndex()],
                         this->ui->comboBoxRate->currentText().toInt(),
                         this->ui->comboBoxSize->currentText().toInt(),
                         this->ui->spinBoxChannel->value(),
                         this->ui->spinBoxChannelX->value(),
                         this->ui->spinBoxChannelY->value(),
-                        this->ui->comboBoxFPS->currentText().toInt()))
+                        this->ui->comboBoxFPS->currentText().toInt());
+
+    if (!oscilloscopeTest->isFormatSupported())
     {
         QMessageBox msgBox;
         msgBox.setText("所选输出设备不支持此设置。");
         msgBox.exec();
+        return;
     }
-    else
-    {
-        QMessageBox msgBox;
-        msgBox.setText("设置成功！");
-        msgBox.exec();
-    }
+
+    oscilloscopeTest->test();
+
+    ui->pushButtonTest->setText("停止测试");
 }

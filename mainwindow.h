@@ -36,16 +36,14 @@ public:
 
 private slots:
     void on_pushButtonOpen_clicked();
-
     void on_pushButtonTest_clicked();
-
-    void on_pushButtonSet_clicked();
 
 private:
     Ui::MainWindow *ui;
 
     QList<QAudioDeviceInfo> audioDeviceInfoList;
-    Oscilloscope oscilloscope;
+    Oscilloscope* oscilloscope = nullptr;
+    Oscilloscope* oscilloscopeTest = nullptr;
 
 
 
