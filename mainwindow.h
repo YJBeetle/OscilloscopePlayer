@@ -17,11 +17,10 @@ extern "C"
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
-
-
-
 #define MAX_AUDIO_FRAME_SIZE    192000
 }
+
+#include "oscilloscope.h"
 
 namespace Ui {
 class MainWindow;
@@ -40,8 +39,18 @@ private slots:
 
     void on_pushButtonTest_clicked();
 
+    void on_pushButtonSet_clicked();
+
 private:
     Ui::MainWindow *ui;
+
+    QList<QAudioDeviceInfo> audioDeviceInfoList;
+    Oscilloscope oscilloscope;
+
+
+
+
+
 
     AVFormatContext *fmt_ctx = nullptr;
     AVCodecContext *video_dec_ctx = nullptr, *audio_dec_ctx = nullptr;

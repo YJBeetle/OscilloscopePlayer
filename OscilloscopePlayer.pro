@@ -28,12 +28,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     videoviewer.cpp \
-    decode.cpp
+    decode.cpp \
+    oscilloscope.cpp
 
 HEADERS += \
         mainwindow.h \
     videoviewer.h \
-    decode.h
+    decode.h \
+    oscilloscope.h
 
 FORMS += \
         mainwindow.ui

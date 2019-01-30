@@ -7,6 +7,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    audioDeviceInfoList = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+
+    int i = 0;
+    foreach (const QAudioDeviceInfo &audioDeviceInfo, audioDeviceInfoList)
+    {
+        this->ui->comboBoxList->addItem(audioDeviceInfo.deviceName());
+        if(audioDeviceInfo == QAudioDeviceInfo::defaultOutputDevice())
+            this->ui->comboBoxList->setCurrentIndex(i);
+        i++;
+    }
 }
 
 MainWindow::~MainWindow()
@@ -464,114 +474,30 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 void MainWindow::on_pushButtonTest_clicked()
 {
+    if(oscilloscope.state())
+        oscilloscope.stop();
+    else
+        oscilloscope.test();
+}
 
-    oscilloscopeFormat.setSampleRate(96000);
-    oscilloscopeFormat.setChannelCount(2);
-    oscilloscopeFormat.setCodec("audio/pcm");
-    oscilloscopeFormat.setSampleType(QAudioFormat::SignedInt);
-    oscilloscopeFormat.setSampleSize(8);
-    oscilloscopeFormat.setByteOrder(QAudioFormat::LittleEndian);
-
-    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-
-    int i = 0;
-    foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+void MainWindow::on_pushButtonSet_clicked()
+{
+    if(oscilloscope.set(audioDeviceInfoList[this->ui->comboBoxList->currentIndex()],
+                        this->ui->comboBoxRate->currentText().toInt(),
+                        this->ui->comboBoxSize->currentText().toInt(),
+                        this->ui->spinBoxChannel->value(),
+                        this->ui->spinBoxChannelX->value(),
+                        this->ui->spinBoxChannelY->value(),
+                        this->ui->comboBoxFPS->currentText().toInt()))
     {
-        if(i == 4)
-        info = deviceInfo;
-        i++;
-        qDebug() << "Device name: " << deviceInfo.deviceName();
-    }
-
-    if (!info.isFormatSupported(oscilloscopeFormat)) {
         QMessageBox msgBox;
         msgBox.setText("所选输出设备不支持此设置。");
         msgBox.exec();
-        return;
     }
-
-    oscilloscopeOutput = new QAudioOutput(info, oscilloscopeFormat, this);
-    oscilloscopeDevice = oscilloscopeOutput->start();
-
-    oscilloscopeBufSize = 96000 / 20;
-
-    oscilloscopeBuf = new char[oscilloscopeBufSize];
-    memset(oscilloscopeBuf, 0, oscilloscopeBufSize);
-
-    while(1){
-
-        oscilloscopeBuf[0x00]=0x00;
-        oscilloscopeBuf[0x02]=0x10;
-        oscilloscopeBuf[0x04]=0x20;
-        oscilloscopeBuf[0x06]=0x30;
-        oscilloscopeBuf[0x08]=0x40;
-        oscilloscopeBuf[0x0a]=0x50;
-        oscilloscopeBuf[0x0c]=0x60;
-        oscilloscopeBuf[0x0e]=0x70;
-        oscilloscopeBuf[0x10]=0x79;
-        oscilloscopeBuf[0x12]=0x70;
-        oscilloscopeBuf[0x14]=0x60;
-        oscilloscopeBuf[0x16]=0x50;
-        oscilloscopeBuf[0x18]=0x40;
-        oscilloscopeBuf[0x1a]=0x30;
-        oscilloscopeBuf[0x1c]=0x20;
-        oscilloscopeBuf[0x1e]=0x10;
-        oscilloscopeBuf[0x20]=-0x00;
-        oscilloscopeBuf[0x22]=-0x10;
-        oscilloscopeBuf[0x24]=-0x20;
-        oscilloscopeBuf[0x26]=-0x30;
-        oscilloscopeBuf[0x28]=-0x40;
-        oscilloscopeBuf[0x2a]=-0x50;
-        oscilloscopeBuf[0x2c]=-0x60;
-        oscilloscopeBuf[0x2e]=-0x70;
-        oscilloscopeBuf[0x30]=-0x80;
-        oscilloscopeBuf[0x32]=-0x70;
-        oscilloscopeBuf[0x34]=-0x60;
-        oscilloscopeBuf[0x36]=-0x50;
-        oscilloscopeBuf[0x38]=-0x40;
-        oscilloscopeBuf[0x3a]=-0x30;
-        oscilloscopeBuf[0x3c]=-0x20;
-        oscilloscopeBuf[0x3e]=-0x10;
-
-        oscilloscopeBuf[0x01]=0x79;
-        oscilloscopeBuf[0x03]=0x70;
-        oscilloscopeBuf[0x05]=0x60;
-        oscilloscopeBuf[0x07]=0x50;
-        oscilloscopeBuf[0x09]=0x40;
-        oscilloscopeBuf[0x0b]=0x30;
-        oscilloscopeBuf[0x0d]=0x20;
-        oscilloscopeBuf[0x0f]=0x10;
-        oscilloscopeBuf[0x11]=-0x00;
-        oscilloscopeBuf[0x13]=-0x10;
-        oscilloscopeBuf[0x15]=-0x20;
-        oscilloscopeBuf[0x17]=-0x30;
-        oscilloscopeBuf[0x19]=-0x40;
-        oscilloscopeBuf[0x1b]=-0x50;
-        oscilloscopeBuf[0x1d]=-0x60;
-        oscilloscopeBuf[0x1f]=-0x70;
-        oscilloscopeBuf[0x21]=-0x80;
-        oscilloscopeBuf[0x23]=-0x70;
-        oscilloscopeBuf[0x25]=-0x60;
-        oscilloscopeBuf[0x27]=-0x50;
-        oscilloscopeBuf[0x29]=-0x40;
-        oscilloscopeBuf[0x2b]=-0x30;
-        oscilloscopeBuf[0x2d]=-0x20;
-        oscilloscopeBuf[0x2f]=-0x10;
-        oscilloscopeBuf[0x31]=0x00;
-        oscilloscopeBuf[0x33]=0x10;
-        oscilloscopeBuf[0x35]=0x20;
-        oscilloscopeBuf[0x37]=0x30;
-        oscilloscopeBuf[0x39]=0x40;
-        oscilloscopeBuf[0x3b]=0x50;
-        oscilloscopeBuf[0x3d]=0x60;
-        oscilloscopeBuf[0x3f]=0x70;
-
-        oscilloscopeDevice->write(oscilloscopeBuf, 64);
-
-        QCoreApplication::processEvents();
-
+    else
+    {
+        QMessageBox msgBox;
+        msgBox.setText("设置成功！");
+        msgBox.exec();
     }
-
-
-
 }
