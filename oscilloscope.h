@@ -22,7 +22,6 @@ public:
     int stop(int time = 0);
     bool state();
     int isFormatSupported();
-    int test();
 
     struct Point {
         qint16 x = 0;
