@@ -485,7 +485,6 @@ void MainWindow::on_pushButtonTest_clicked()
 
     oscilloscopeTest = new Oscilloscope(audioDeviceInfoList[this->ui->comboBoxList->currentIndex()],
                         this->ui->comboBoxRate->currentText().toInt(),
-                        this->ui->comboBoxSize->currentText().toInt(),
                         this->ui->spinBoxChannel->value(),
                         this->ui->spinBoxChannelX->value(),
                         this->ui->spinBoxChannelY->value(),

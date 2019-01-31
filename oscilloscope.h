@@ -3,6 +3,10 @@
 
 #include <QThread>
 #include <QCoreApplication>
+#include <QVector>
+#include <QByteArray>
+#include <QtEndian>
+#include <QTest>
 #include <QAudioOutput>
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>
@@ -11,16 +15,22 @@ class Oscilloscope : public QThread
 {
     Q_OBJECT
 public:
-    explicit Oscilloscope(QAudioDeviceInfo info, int sampleRate, int sampleSize, int channelCount, int channelX, int channelY, int fps, QObject *parent = nullptr);
+    explicit Oscilloscope(QAudioDeviceInfo info, int sampleRate, int channelCount, int channelX, int channelY, int fps, QObject *parent = nullptr);
     ~Oscilloscope();
 
     void run();
     int stop(int time = 0);
     bool state();
     int isFormatSupported();
-    int setPointData(char* pointData, int size);
     int test();
 
+    struct Point {
+        qint16 x = 0;
+        qint16 y = 0;
+    };
+    QVector<Point> points;
+    int pointsDataSize = 0;
+    bool refresh = false;
 signals:
 
 public slots:
@@ -33,13 +43,10 @@ private:
     QAudioFormat format;
     QAudioOutput* output = nullptr;
     QIODevice* device = nullptr;
-    char* buffer = nullptr;
-    int bufferSize = 0;
+    QByteArray buffer;
     int bufferDataSize = 0;
-    char* pointData = nullptr;
-    int pointDataSize = 0;
-    bool refresh = false;
 
+    int channelCount;
     int channelX;
     int channelY;
     int fps;
