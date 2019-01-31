@@ -11,6 +11,7 @@ Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int
     format.setSampleRate(sampleRate);
     format.setChannelCount(channelCount);
 
+    this->sampleRate = sampleRate;
     this->channelCount = channelCount;
     this->channelX = channelX;
     this->channelY = channelY;
@@ -18,7 +19,7 @@ Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int
     points.resize(sampleRate / fps);
     buffer.resize(sampleRate / fps * channelCount * 2);
     output = new QAudioOutput(audioDeviceInfo, format, this);
-    if(output->bufferSize() < buffer.length() * 2) output->setBufferSize(buffer.length() * 2);  //如果音频缓冲区大小小于最大buffer的两倍则扩大之。
+    if(output->bufferSize() < buffer.length() * 2) output->setBufferSize(buffer.length() * 2);  //如果音频缓冲区小于最大buffer的两倍则扩大之。
     device = output->start();
 }
 
@@ -42,7 +43,8 @@ void Oscilloscope::run()
 
         if(device && output && bufferDataSize)
         {
-            while(output->bufferSize() - output->bytesFree() < output->periodSize() * 10 && output->bytesFree() > bufferDataSize)   //如果已缓冲小于periodSize的10倍，且剩余缓冲大于即将写入的数据大小
+            if((output->bufferSize() - output->bytesFree()) * 10 / 2 / channelCount * fps / sampleRate < 10 && //如果剩余数据可播放的时间小于fps的倒数(*10是为了不想用浮点数)
+                    output->bytesFree() > bufferDataSize)    //如果剩余缓冲大于即将写入的数据大小
                 device->write(buffer, bufferDataSize);
         }
 

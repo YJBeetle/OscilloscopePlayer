@@ -45,6 +45,7 @@ private:
     QByteArray buffer;
     int bufferDataSize = 0;
 
+    int sampleRate;
     int channelCount;
     int channelX;
     int channelY;
