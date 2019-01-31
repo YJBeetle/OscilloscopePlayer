@@ -175,7 +175,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <item>
           <property name="text">
@@ -215,11 +215,6 @@
          <item>
           <property name="text">
            <string>60</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>120</string>
           </property>
          </item>
         </widget>
