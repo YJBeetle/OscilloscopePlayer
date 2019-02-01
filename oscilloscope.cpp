@@ -16,7 +16,7 @@ Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int
     this->channelX = channelX;
     this->channelY = channelY;
     this->fps = fps;
-    points.resize(sampleRate / fps);
+    points.resize(sampleRate / fps);    //最大的一次的数据量是 采样率/贞率
     buffer.resize(sampleRate / fps * channelCount * 2);
     output = new QAudioOutput(audioDeviceInfo, format, this);
     if(output->bufferSize() < buffer.length() * 2) output->setBufferSize(buffer.length() * 2);  //如果音频缓冲区小于最大buffer的两倍则扩大之。
@@ -44,8 +44,10 @@ void Oscilloscope::run()
         if(device && output && bufferDataSize)
         {
             if((output->bufferSize() - output->bytesFree()) * 10 / 2 / channelCount * fps / sampleRate < 10 && //如果剩余数据可播放的时间小于fps的倒数(*10是为了不想用浮点数)
-                    output->bytesFree() > bufferDataSize)    //如果剩余缓冲大于即将写入的数据大小
+                    output->bytesFree() > bufferDataSize)    //且剩余缓冲大于即将写入的数据大小 (一般情况下不会出现这个情况，这里只是以防万一)
                 device->write(buffer, bufferDataSize);
+            else    //否则说明缓冲区时间一定大于fps的倒数，所以可以休息一会
+                QTest::qSleep(1000 / fps / 2);  //这里/2为了更保守一些
         }
 
         if(refresh)
