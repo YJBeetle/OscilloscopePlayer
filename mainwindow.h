@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
@@ -20,6 +21,7 @@ extern "C"
 #define MAX_AUDIO_FRAME_SIZE    192000
 }
 
+#include "decode.h"
 #include "oscilloscope.h"
 
 namespace Ui {
@@ -36,7 +38,10 @@ public:
 
 private slots:
     void on_pushButtonOpen_clicked();
+    void on_pushButtonPlay_clicked();
     void on_pushButtonTest_clicked();
+
+    void on_spinBoxChannel_valueChanged(int arg1);
 
 private:
     Ui::MainWindow *ui;
@@ -44,7 +49,7 @@ private:
     QList<QAudioDeviceInfo> audioDeviceInfoList;
     Oscilloscope* oscilloscope = nullptr;
     Oscilloscope* oscilloscopeTest = nullptr;
-
+    Decode* decode = nullptr;
 
 
 

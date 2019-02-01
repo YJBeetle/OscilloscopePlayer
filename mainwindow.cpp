@@ -152,7 +152,7 @@ memset(play_buf, sizeof(uint8_t), out_size);
 
 
 
-            QTest::qSleep( 30 );
+            QTest::qSleep( 20 );
 
 
 
@@ -284,7 +284,9 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 
 
-        format.setSampleRate(48000);
+        //        format = QAudioDeviceInfo::defaultOutputDevice().preferredFormat();
+
+        format.setSampleRate(44100);
         format.setChannelCount(2);
         format.setCodec("audio/pcm");
         format.setSampleType(QAudioFormat::SignedInt);
@@ -297,11 +299,12 @@ void MainWindow::on_pushButtonOpen_clicked()
             return;
         }
 
-
-        audio = new QAudioOutput(format, this);
+        audio = new QAudioOutput(format);
         out = audio->start();
 
         play_buf = (uint8_t*)av_malloc(out_size);
+
+
 
 
 
@@ -360,8 +363,9 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 
 
-            //音频
-            pSwrCtx = swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 48000, audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);
+
+
+            pSwrCtx = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, format.sampleRate(), audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);
             if(!pSwrCtx)
             {
                 fprintf(stderr,"Could not set options for resample context.\n");
@@ -570,4 +574,22 @@ void MainWindow::on_pushButtonTest_clicked()
     oscilloscopeTest->refresh = true;
 
     ui->pushButtonTest->setText("停止测试");
+}
+
+void MainWindow::on_pushButtonPlay_clicked()
+{
+    QTime time;
+
+    time.start();
+    while(1)
+    {
+        qDebug() << time.elapsed();
+        QCoreApplication::processEvents();
+    }
+}
+
+void MainWindow::on_spinBoxChannel_valueChanged(int arg1)
+{
+    ui->spinBoxChannelX->setMaximum(arg1 - 1);
+    ui->spinBoxChannelY->setMaximum(arg1 - 1);
 }
