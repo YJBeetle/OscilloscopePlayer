@@ -3,17 +3,61 @@
 
 #include <QThread>
 
+extern "C"
+{
+#include <libavutil/imgutils.h>
+#include <libavutil/samplefmt.h>
+#include <libavutil/timestamp.h>
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libavutil/samplefmt.h>
+#define MAX_AUDIO_FRAME_SIZE    192000
+}
+
 class Decode : public QThread
 {
     Q_OBJECT
 public:
     explicit Decode(QObject *parent = nullptr);
+    ~Decode();
+
+    void run();
+    int open(QString filename);
 
 signals:
 
 public slots:
 
 private:
+    AVFormatContext *fmt_ctx = nullptr; //源文件格式信息
+    int video_stream_idx = -1, audio_stream_idx = -1;
+    AVStream *video_stream = nullptr, *audio_stream = nullptr;
+    AVCodecContext *video_dec_ctx = nullptr, *audio_dec_ctx = nullptr;
+    /* 视频 */
+    int vwidth, vheight;
+    enum AVPixelFormat pix_fmt; //像素格式
+    uint8_t *video_dst_data[4] = {nullptr}; //视频缓冲区
+    int video_dst_bufsize;  //视频缓冲大小
+    int      video_dst_linesize[4];
+
+    AVFrame* frame = nullptr;
+    AVPacket pkt;
+    int video_frame_count = 0;
+    int audio_frame_count = 0;
+    /* 音频 */
+    SwrContext* audio_swr_ctx = nullptr;
+
+
+
+
+
+
+
+
+
+    int decode_packet(int *got_frame, int cached);
+
+
 
 };
 
