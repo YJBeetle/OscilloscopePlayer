@@ -60,7 +60,11 @@ void MainWindow::on_pushButtonOpen_clicked()
         }
 
         //显示文件信息
-        log("FPS: " + QString::number(decode->fps(), 'f', 2));
+        auto fps = decode->fps();
+        log("FPS: " + QString::number(double(fps.num) / double(fps.den), 'f', 2));
+
+        //设置UI上的FPS
+        ui->comboBoxFPS->setCurrentText(QString::number(double(fps.num) / double(fps.den), 'f', 6));    //示波器输出的fps与视频的不同，因为如果一个场景点数过多，则需要更低fps（实际就算点数过多，也会完成一次刷新，只是会丢帧，但是其实也没关系，所以ui上的fps设置主要是是为了预留更合适的音频缓冲区而设定）
     }
 }
 
@@ -91,7 +95,7 @@ void MainWindow::on_pushButtonPlay_clicked()
     QAudioOutput audioOutput(audioFormat);
 
     //根据帧率设置音频缓冲区
-    decode->fps();
+    auto fps = decode->fps();
     QIODevice* audioDevice = audioOutput.start();
 
 
@@ -104,18 +108,20 @@ void MainWindow::on_pushButtonPlay_clicked()
 
 
 
-
-
-
-
-
     QTime time;
     time.start();
-//    while(1)
-//    {
-//        qDebug() << time.elapsed();
-//        QCoreApplication::processEvents();
-//    }
+    int i = 0;
+    while(1)
+    {
+        if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
+        {
+            i++;
+//            qDebug() << double(time.elapsed()) / 1000;
+
+        }
+        QCoreApplication::processEvents();
+        QTest::qSleep(1000 * double(fps.den) / double(fps.num) / 10);   //休息 每帧时间/10 ms
+    }
 }
 
 void MainWindow::on_pushButtonTest_clicked()
