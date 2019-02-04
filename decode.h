@@ -19,6 +19,8 @@ extern "C"
 #define MAX_AUDIO_FRAME_SIZE    192000
 }
 
+#include "oscilloscope.h"
+
 class Decode : public QThread
 {
     Q_OBJECT
@@ -32,6 +34,7 @@ public:
 
     QQueue<QImage> video;
     QQueue<QBuffer> audio;
+    QQueue<QVector<Point>> points;
 signals:
 
 public slots:

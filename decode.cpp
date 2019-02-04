@@ -242,6 +242,18 @@ int Decode::decode_packet(int *got_frame)
             for (int y = 0; y < video_height; y++)
                 memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
             video.enqueue(image);   //添加到队列尾部
+
+            //计算点
+            QVector<Point> points(4);
+            points[0].x = 10000;
+            points[0].y = 10000;
+            points[1].x = 10000;
+            points[1].y = -10000;
+            points[2].x = -10000;
+            points[2].y = -10000;
+            points[3].x = -10000;
+            points[3].y = 10000;
+            this->points.enqueue(points);
         }
     }
     else if (pkt.stream_index == audio_stream_idx)  //是音频包

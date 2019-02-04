@@ -150,16 +150,17 @@ void MainWindow::on_pushButtonPlay_clicked()
                 //输出音频
 
                 //刷新示波器输出
-                oscilloscope->points[0].x = 10000;
-                oscilloscope->points[0].y = 10000;
-                oscilloscope->points[1].x = 10000;
-                oscilloscope->points[1].y = -10000;
-                oscilloscope->points[2].x = -10000;
-                oscilloscope->points[2].y = -10000;
-                oscilloscope->points[3].x = -10000;
-                oscilloscope->points[3].y = 10000;
-                oscilloscope->pointsDataSize = 4;
-                oscilloscope->refresh = true;
+                if(!decode->points.isEmpty())
+                {
+                    oscilloscope->points = decode->points.dequeue();
+                    oscilloscope->pointsDataSize = 4;
+                    oscilloscope->refresh = true;
+
+                    //屏幕绘制示波器的模拟
+
+                }
+                else
+                    log("示波器丢帧");
 
                 i++;
             }

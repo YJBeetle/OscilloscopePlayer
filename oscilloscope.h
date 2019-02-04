@@ -11,6 +11,11 @@
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>
 
+struct Point {
+    qint16 x = 0;
+    qint16 y = 0;
+};
+
 class Oscilloscope : public QThread
 {
     Q_OBJECT
@@ -23,10 +28,6 @@ public:
     bool state();
     int isFormatSupported();
 
-    struct Point {
-        qint16 x = 0;
-        qint16 y = 0;
-    };
     QVector<Point> points;
     int pointsDataSize = 0;
     bool refresh = false;
