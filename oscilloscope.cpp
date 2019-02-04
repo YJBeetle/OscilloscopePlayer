@@ -34,6 +34,7 @@ void Oscilloscope::run()
     stateStart = true;
     while(1)
     {
+        //退出检测
         if(stopMe || output->state() == QAudio::StoppedState)
         {
             stopMe = false;
@@ -41,15 +42,7 @@ void Oscilloscope::run()
             return;
         }
 
-        if(device && output && bufferDataSize)
-        {
-            if((output->bufferSize() - output->bytesFree()) * 10 / 2 / channelCount * fps / sampleRate < 10 && //如果剩余数据可播放的时间小于fps的倒数(*10是为了不想用浮点数)
-                    output->bytesFree() > bufferDataSize)    //且剩余缓冲大于即将写入的数据大小 (一般情况下不会出现这个情况，这里只是以防万一)
-                device->write(buffer, bufferDataSize);
-            else    //否则说明缓冲区时间一定大于fps的倒数，所以可以休息一会
-                QTest::qSleep(1000 / fps / 2);  //这里/2为了更保守一些
-        }
-
+        //如果需要刷新，先刷新
         if(refresh)
         {
             if(pointsDataSize > points.length()) pointsDataSize = points.length();
@@ -65,6 +58,17 @@ void Oscilloscope::run()
             if(bufferDataSize > buffer.length()) bufferDataSize = buffer.length();
             refresh = false;
         }
+
+        //输出
+        if(device && output && bufferDataSize)
+        {
+            if((output->bufferSize() - output->bytesFree()) * 10 / 2 / channelCount * fps / sampleRate < 10 && //如果剩余数据可播放的时间小于fps的倒数(*10是为了不想用浮点数)
+                    output->bytesFree() > bufferDataSize)    //且剩余缓冲大于即将写入的数据大小 (一般情况下不会出现这个情况，这里只是以防万一)
+                device->write(buffer, bufferDataSize);
+            else    //否则说明缓冲区时间一定大于fps的倒数，所以可以休息一会
+                QTest::qSleep(1000 / fps / 2);  //这里/2为了更保守一些
+        }
+
     }
 }
 
