@@ -11,7 +11,6 @@ Decode::~Decode()
     avcodec_free_context(&audio_dec_ctx);
     avformat_close_input(&fmt_ctx);
     av_frame_free(&frame);
-    av_free(video_dst_data[0]);
 }
 
 void Decode::run()
@@ -77,13 +76,26 @@ int Decode::open(QString filename)
                     /* 启动解码器 */
                     if (avcodec_open2(video_dec_ctx, video_dec, nullptr) >= 0)
                     {
-                        /* 分配空间储存解码图像 */
-                        vwidth = video_dec_ctx->width;
-                        vheight = video_dec_ctx->height;
-                        pix_fmt = video_dec_ctx->pix_fmt;
-                        video_dst_bufsize = av_image_alloc(video_dst_data, video_dst_linesize, vwidth, vheight, pix_fmt, 1);
-                        if (video_dst_bufsize < 0)
-                            return 9;   //无法分配原始视频缓冲区
+                        /* 读取一些信息，宽高像素格式 */
+                        video_width = video_dec_ctx->width;
+                        video_height = video_dec_ctx->height;
+                        video_pix_fmt = video_dec_ctx->pix_fmt;
+                        //转换色彩
+                        video_convert_frame = av_frame_alloc(); //帧
+                        if (!video_convert_frame)
+                            return 8;  //无法分配帧
+                        unsigned char* out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_RGBA, video_width, video_height, 1));
+                        if (!out_buffer)
+                            return 8;  //无法分配
+                        av_image_fill_arrays(video_convert_frame->data, video_convert_frame->linesize, out_buffer, AV_PIX_FMT_RGBA, video_width, video_height, 1);
+                        video_convert_ctx = sws_getContext(video_width, video_height, video_pix_fmt,
+                                                           video_width, video_height, AV_PIX_FMT_RGBA,
+                                                           SWS_BICUBIC, NULL, NULL, NULL);
+                        if(!video_convert_ctx)
+                        {
+                            audio_stream_idx = -1;
+                            return 8;  //无法设置视频色彩转换上下文
+                        }
                     }
                     else
                         return 7;   //无法打开视频编解码器
@@ -121,15 +133,18 @@ int Decode::open(QString filename)
                     /* 启动解码器 */
                     if (avcodec_open2(audio_dec_ctx, audio_dec, nullptr) >= 0)
                     {
-                        /* 音频重采样 */
-                        audio_swr_ctx = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100, int64_t(audio_dec_ctx->channel_layout), audio_dec_ctx->sample_fmt, audio_dec_ctx->sample_rate, 0, nullptr);    //采样为44100双声道16位整型
-                        //audio_swr_ctx = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100, audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);    //采样为44100双声道16位整型
-                        if(!audio_swr_ctx)
+                        /* 音频重采样 */    //采样为44100双声道16位整型
+                        audio_convert_ctx = swr_alloc_set_opts(nullptr,
+                                                               AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,
+                                                               int64_t(audio_dec_ctx->channel_layout), audio_dec_ctx->sample_fmt, audio_dec_ctx->sample_rate,
+                                                               0, nullptr);
+                        //audio_convert_ctx = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100, audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);    //采样为44100双声道16位整型
+                        if(!audio_convert_ctx)
                         {
                             audio_stream_idx = -1;
                             return 15;  //无法设置重新采样上下文
                         }
-                        swr_init(audio_swr_ctx);
+                        swr_init(audio_convert_ctx);
                     }
                     else
                     {
@@ -213,18 +228,20 @@ int Decode::decode_packet(int *got_frame)
             //输出帧信息
             printf("video_frame n:%d coded_n:%d\n",
                    video_frame_count++, frame->coded_picture_number);
-            /* 将解码后的帧复制到目标缓冲区：这是必需的，因为需要对齐数据 */
-            //av_image_copy(video_dst_data, video_dst_linesize, const_cast<const uint8_t **>(frame->data), frame->linesize, pix_fmt, vwidth, vheight);
-            /* 写入rawvideo文件 */
-            //fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
+            //转换色彩
+            sws_scale(video_convert_ctx,
+                      frame->data, frame->linesize, 0, video_height,
+                      video_convert_frame->data, video_convert_frame->linesize);
             //生成QImage
-            QImage image(frame->width, frame->height, QImage::Format_RGB32);
+            QImage image(frame->width, frame->height, QImage::Format_ARGB32);
             for (int y = 0; y < frame->height; y++)
             {
                 for(int x = 0; x < frame->width; x++)
                 {
-                    int s = y * frame->linesize[0] + x;
-                    QColor color(frame->data[0][s], frame->data[0][s+1], frame->data[0][s+2], frame->data[0][s+3]);
+                    int offset = y * video_convert_frame->linesize[0] + x * 4;
+                    QColor color(video_convert_frame->data[0][offset],
+                                 video_convert_frame->data[0][offset + 1],
+                                 video_convert_frame->data[0][offset + 2]);
                     image.setPixelColor(x, y, color);
                 }
             }

@@ -115,12 +115,12 @@ void MainWindow::on_pushButtonPlay_clicked()
     {
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
         {
-            i++;
-            //            qDebug() << double(time.elapsed()) / 1000;
+            //qDebug() << double(time.elapsed()) / 1000;    //显示时间
             if(!decode->video.isEmpty())
             {
-                ui->videoViewer->image = decode->video.dequeue();
-                ui->videoViewer->update();
+                ui->videoViewer->image = decode->video.dequeue();   //设置新图像
+                ui->videoViewer->update();  //刷新
+                i++;
             }
             else
                 log("丢帧");

@@ -12,6 +12,7 @@ extern "C"
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 #include <libavutil/samplefmt.h>
 #define MAX_AUDIO_FRAME_SIZE    192000
@@ -42,15 +43,14 @@ private:
     AVPacket pkt;
     AVFrame* frame = nullptr;
     /* 视频 */
-    int vwidth, vheight;
-    enum AVPixelFormat pix_fmt; //像素格式
-    uint8_t *video_dst_data[4] = {nullptr}; //视频缓冲区
-    int video_dst_bufsize;  //视频缓冲大小
-    int      video_dst_linesize[4];
-    int video_frame_count = 0;  //计数
+    int video_width, video_height;
+    AVPixelFormat video_pix_fmt; //像素格式
+    SwsContext* video_convert_ctx = nullptr;    //转码
+    AVFrame* video_convert_frame = nullptr;
+    int video_frame_count = 0;  //视频计数
     /* 音频 */
-    SwrContext* audio_swr_ctx = nullptr;    //转码
-    int audio_frame_count = 0;  //计数
+    SwrContext* audio_convert_ctx = nullptr;    //转码
+    int audio_frame_count = 0;  //音频计数
 
     int decode_packet(int *got_frame);
 };
