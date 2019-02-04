@@ -206,6 +206,11 @@ int Decode::decode_packet(int *got_frame)
     int ret = 0;
     int decoded = pkt.size;
     *got_frame = 0;
+
+    //检查队列长度
+    auto fps = this->fps();
+    if(video.size() > fps.num / fps.den)    //缓存1s，如果队列中已有的超过1s（根据fps）则休息一帧的时间
+        QTest::qSleep(1000 * fps.den / fps.num);
     if (pkt.stream_index == video_stream_idx)   //包是视频包
     {
         /* 解码视频帧 */
