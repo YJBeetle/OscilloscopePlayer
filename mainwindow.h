@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QGraphicsScene>
+#include <QGraphicsLineItem>
 #include <QTimer>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -35,6 +37,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QGraphicsScene* scene;
 
     QList<QAudioDeviceInfo> audioDeviceInfoList;
     Oscilloscope* oscilloscope = nullptr;

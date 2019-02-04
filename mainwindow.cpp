@@ -19,8 +19,11 @@ MainWindow::MainWindow(QWidget *parent) :
         i++;
     }
 
-    //设置最大行数
+    //设置日志最大行数
     ui->textEditInfo->document()->setMaximumBlockCount(100);
+
+    //示波器图像绘制部分
+    ui->graphicsView->setScene(scene = new QGraphicsScene(this));  //绑定scene
 }
 
 MainWindow::~MainWindow()
@@ -157,7 +160,17 @@ void MainWindow::on_pushButtonPlay_clicked()
                     oscilloscope->refresh = true;
 
                     //屏幕绘制示波器的模拟
-
+                    scene->clear();
+                    for(int i = 0; i < oscilloscope->points.length(); i++) {
+                        auto line = new QGraphicsLineItem();
+                        // 设置画笔
+                        auto linePen = line->pen();
+                        linePen.setColor(Qt::green);
+                        linePen.setWidth(1);
+                        line->setPen(linePen);
+                        line->setLine(oscilloscope->points[i].x * 400 / 65536, oscilloscope->points[i].y * 400 / 65536, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].x * 400 / 65536, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].y * 400 / 65536);
+                        scene->addItem(line);
+                    }
                 }
                 else
                     log("示波器丢帧");
