@@ -64,7 +64,7 @@ void MainWindow::on_pushButtonOpen_clicked()
         log("FPS: " + QString::number(double(fps.num) / double(fps.den), 'f', 2));
 
         //设置UI上的FPS
-        ui->comboBoxFPS->setCurrentText(QString::number(double(fps.num) / double(fps.den), 'f', 6));    //示波器输出的fps与视频的不同，因为如果一个场景点数过多，则需要更低fps（实际就算点数过多，也会完成一次刷新，只是会丢帧，但是其实也没关系，所以ui上的fps设置主要是是为了预留更合适的音频缓冲区而设定）
+        ui->comboBoxFPS->setCurrentText(QString::number(double(fps.num) / double(fps.den), 'f', 0));    //示波器输出的fps与视频的不同，因为如果一个场景点数过多，则需要更低fps（实际就算点数过多，也会完成一次刷新，只是会丢帧，但是其实也没关系，所以ui上的fps设置主要是是为了预留更合适的音频缓冲区而设定）
     }
 }
 
@@ -150,14 +150,14 @@ void MainWindow::on_pushButtonPlay_clicked()
                 //输出音频
 
                 //刷新示波器输出
-                oscilloscope->points[0].x = 10;
-                oscilloscope->points[0].y = 10;
-                oscilloscope->points[1].x = 10;
-                oscilloscope->points[1].y = -10;
-                oscilloscope->points[2].x = -10;
-                oscilloscope->points[2].y = -10;
-                oscilloscope->points[3].x = -10;
-                oscilloscope->points[3].y = 10;
+                oscilloscope->points[0].x = 10000;
+                oscilloscope->points[0].y = 10000;
+                oscilloscope->points[1].x = 10000;
+                oscilloscope->points[1].y = -10000;
+                oscilloscope->points[2].x = -10000;
+                oscilloscope->points[2].y = -10000;
+                oscilloscope->points[3].x = -10000;
+                oscilloscope->points[3].y = 10000;
                 oscilloscope->pointsDataSize = 4;
                 oscilloscope->refresh = true;
 
