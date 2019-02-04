@@ -70,13 +70,17 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 void MainWindow::on_pushButtonPlay_clicked()
 {
+    if(oscilloscope)
+    {
+        ui->pushButtonPlay->setText("播放");
+        return;
+    }
+
     if(!decode)
     {
         QMessageBox::warning(this, "播放失败", "请先打开文件。");
         return;
     }
-
-    ui->pushButtonPlay->setText("暂停");
 
     //设置音频输出
     QAudioFormat audioFormat;
@@ -98,19 +102,40 @@ void MainWindow::on_pushButtonPlay_clicked()
     auto fps = decode->fps();
     QIODevice* audioDevice = audioOutput.start();
 
-
     int out_size = MAX_AUDIO_FRAME_SIZE*2;
     uint8_t *play_buf = nullptr;
     play_buf = reinterpret_cast<uint8_t*>(av_malloc(size_t(out_size)));
 
+    //解码器启动
     decode->start();
 
+    //示波器
+    oscilloscope = new Oscilloscope(audioDeviceInfoList[ui->comboBoxList->currentIndex()],
+                        ui->comboBoxRate->currentText().toInt(),
+                        ui->spinBoxChannel->value(),
+                        ui->spinBoxChannelX->value(),
+                        ui->spinBoxChannelY->value(),
+                        ui->comboBoxFPS->currentText().toInt());
+    //检查示波器输出声卡兼容性
+    if (!oscilloscope->isFormatSupported())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("所选输出设备不支持此设置。");
+        msgBox.exec();
+        return;
+    }
+    //示波器输出启动
+    oscilloscope->start();
 
 
-
+    //计时器
     QTime time;
     time.start();
     int i = 0;
+
+    //按钮字样
+    ui->pushButtonPlay->setText("暂停");
+
     while(1)
     {
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
@@ -118,8 +143,24 @@ void MainWindow::on_pushButtonPlay_clicked()
             //qDebug() << double(time.elapsed()) / 1000;    //显示时间
             if(!decode->video.isEmpty())
             {
-                ui->videoViewer->image = decode->video.dequeue();   //设置新图像
-                ui->videoViewer->update();  //刷新
+                //刷新视频图像
+                ui->videoViewer->image = decode->video.dequeue();   //设置视频新图像
+                ui->videoViewer->update();  //刷新视频图像
+
+                //输出音频
+
+                //刷新示波器输出
+                oscilloscope->points[0].x = 10;
+                oscilloscope->points[0].y = 10;
+                oscilloscope->points[1].x = 10;
+                oscilloscope->points[1].y = -10;
+                oscilloscope->points[2].x = -10;
+                oscilloscope->points[2].y = -10;
+                oscilloscope->points[3].x = -10;
+                oscilloscope->points[3].y = 10;
+                oscilloscope->pointsDataSize = 4;
+                oscilloscope->refresh = true;
+
                 i++;
             }
             else
