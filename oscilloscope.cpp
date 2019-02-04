@@ -1,9 +1,7 @@
 #include "oscilloscope.h"
 
-Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int channelCount, int channelX, int channelY, int fps, QObject *parent) : QThread(parent)
+Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int channelCount, int channelX, int channelY, int fps, QObject *parent) : QThread(parent), audioDeviceInfo(audioDeviceInfo), sampleRate(sampleRate), channelCount(channelCount), channelX(channelX), channelY(channelY), fps(fps)
 {
-    this->audioDeviceInfo = audioDeviceInfo;
-
     format.setCodec("audio/pcm");
     format.setSampleSize(16);
     format.setSampleType(QAudioFormat::SignedInt);
@@ -11,14 +9,10 @@ Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int
     format.setSampleRate(sampleRate);
     format.setChannelCount(channelCount);
 
-    this->sampleRate = sampleRate;
-    this->channelCount = channelCount;
-    this->channelX = channelX;
-    this->channelY = channelY;
-    this->fps = fps;
-    points.resize(sampleRate / fps);    //最大的一次的数据量是 采样率/贞率
-    buffer.resize(sampleRate / fps * channelCount * 2);
-    output = new QAudioOutput(audioDeviceInfo, format, this);
+    if(this->fps == 0) this->fps = 1;
+    points.resize(this->sampleRate / this->fps);    //最大的一次的数据量是 采样率/贞率
+    buffer.resize(this->sampleRate / this->fps * this->channelCount * 2);
+    output = new QAudioOutput(this->audioDeviceInfo, format, this);
     if(output->bufferSize() < buffer.length() * 2) output->setBufferSize(buffer.length() * 2);  //如果音频缓冲区小于最大buffer的两倍则扩大之。
     device = output->start();
 }
