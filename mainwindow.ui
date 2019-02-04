@@ -68,13 +68,13 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="0" column="0" colspan="5">
-        <widget class="QSlider" name="horizontalSlider">
-         <property name="maximum">
-          <number>0</number>
+       <item row="1" column="3">
+        <widget class="QCheckBox" name="checkBoxAudio">
+         <property name="text">
+          <string>输出声音</string>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -91,13 +91,23 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QCheckBox" name="checkBoxAudio">
+       <item row="1" column="5">
+        <widget class="QLabel" name="labelTime">
          <property name="text">
-          <string>输出声音</string>
+          <string>&lt;pre&gt; 00:00:00 / 00:00:00 &lt;/pre&gt;</string>
          </property>
-         <property name="checked">
-          <bool>true</bool>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="6">
+        <widget class="QSlider" name="horizontalSlider">
+         <property name="maximum">
+          <number>0</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -114,7 +124,7 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
+       <item row="1" column="4">
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -127,13 +137,16 @@
          </property>
         </spacer>
        </item>
-       <item row="1" column="4">
-        <widget class="QLabel" name="labelTime">
-         <property name="text">
-          <string>&lt;pre&gt; 00:00:00 / 00:00:00 &lt;/pre&gt;</string>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="pushButtonStop">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>31</height>
+          </size>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <property name="text">
+          <string>停止</string>
          </property>
         </widget>
        </item>
