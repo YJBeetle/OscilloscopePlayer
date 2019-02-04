@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     audioDeviceInfoList = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
 
+    //列出音频设备
     int i = 0;
     foreach (const QAudioDeviceInfo &audioDeviceInfo, audioDeviceInfoList)
     {
@@ -17,11 +18,19 @@ MainWindow::MainWindow(QWidget *parent) :
             this->ui->comboBoxList->setCurrentIndex(i);
         i++;
     }
+
+    //设置最大行数
+    ui->textEditInfo->document()->setMaximumBlockCount(100);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::log(const QString text)
+{
+    ui->textEditInfo->append(text);
 }
 
 void MainWindow::on_pushButtonOpen_clicked()
@@ -32,7 +41,7 @@ void MainWindow::on_pushButtonOpen_clicked()
                                                 tr("MPEG Video(*.mp4 *.mov *.mpg *.m4v *.avi *.flv *.rm *.rmvb);;Allfile(*.*)"));
     if(!path.isEmpty())
     {
-        qDebug() << path;
+        log("打开: " + path);
 
         decode = new Decode();
         switch(decode->open(path))
@@ -49,6 +58,9 @@ void MainWindow::on_pushButtonOpen_clicked()
             QMessageBox::warning(this, "打开失败", "未知原因打开失败。");
             return;
         }
+
+        //显示文件信息
+        log("FPS: " + QString::number(decode->fps(), 'f', 2));
     }
 }
 
@@ -62,8 +74,8 @@ void MainWindow::on_pushButtonPlay_clicked()
 
     ui->pushButtonPlay->setText("暂停");
 
+    //设置音频输出
     QAudioFormat audioFormat;
-
     //audioFormat = QAudioDeviceInfo::defaultOutputDevice().preferredFormat();
     audioFormat.setSampleRate(44100);
     audioFormat.setChannelCount(2);
@@ -71,15 +83,17 @@ void MainWindow::on_pushButtonPlay_clicked()
     audioFormat.setSampleType(QAudioFormat::SignedInt);
     audioFormat.setSampleSize(16);
     audioFormat.setByteOrder(QAudioFormat::LittleEndian);
-
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(audioFormat)) {
         QMessageBox::warning(this, "播放失败", "不支持的音频设置。");
         return;
     }
-
     QAudioOutput audioOutput(audioFormat);
+
+    //根据帧率设置音频缓冲区
+    decode->fps();
     QIODevice* audioDevice = audioOutput.start();
+
 
     int out_size = MAX_AUDIO_FRAME_SIZE*2;
     uint8_t *play_buf = nullptr;

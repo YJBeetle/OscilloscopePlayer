@@ -22,7 +22,7 @@ void Decode::run()
     while (av_read_frame(fmt_ctx, &pkt) >= 0) {
         AVPacket orig_pkt = pkt;
         do {
-            ret = decode_packet(&got_frame, 0);
+            ret = decode_packet(&got_frame);
             if (ret < 0)
                 break;
             pkt.data += ret;
@@ -34,7 +34,7 @@ void Decode::run()
     pkt.data = nullptr;
     pkt.size = 0;
     do {
-        decode_packet(&got_frame, 1);
+        decode_packet(&got_frame);
     } while (got_frame);
 
 
@@ -48,6 +48,9 @@ int Decode::open(QString filename)
         return 1;   //无法打开源文件
     }
 
+    /* 显示输入文件信息（调试用） */
+    av_dump_format(fmt_ctx, 0, filename.toLatin1().data(), 0);
+
     /* 检索流信息 */
     if (avformat_find_stream_info(fmt_ctx, nullptr) < 0)
     {
@@ -58,7 +61,7 @@ int Decode::open(QString filename)
     video_stream_idx = av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     if (video_stream_idx >= 0)
     {
-        AVStream* video_stream = fmt_ctx->streams[video_stream_idx];   //视频流
+        video_stream = fmt_ctx->streams[video_stream_idx];   //视频流
         /* 寻找视频流的解码器 */
         AVCodec* video_dec = nullptr;    //视频流的解码器
         video_dec = avcodec_find_decoder(video_stream->codecpar->codec_id);
@@ -101,7 +104,7 @@ int Decode::open(QString filename)
     audio_stream_idx = av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     if (audio_stream_idx >= 0)
     {
-        AVStream* audio_stream = fmt_ctx->streams[audio_stream_idx];   //音频流
+        audio_stream = fmt_ctx->streams[audio_stream_idx];   //音频流
         /* 寻找视频流的解码器 */
         AVCodec* audio_dec = nullptr;    //音频流的解码器
         audio_dec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
@@ -158,14 +161,6 @@ int Decode::open(QString filename)
         return 10;   //找不到音频流
     }
 
-    //    /* dump input information to stderr */
-    //    av_dump_format(fmt_ctx, 0, src_filename, 0);
-    //    if (!audio_stream && !video_stream) {
-    //        fprintf(stderr, "Could not find audio or video stream in the input, aborting\n");
-    //        ret = 1;
-    //        goto end;
-    //    }
-
     frame = av_frame_alloc();
     if (!frame)
         return 16;  //无法分配帧
@@ -178,7 +173,15 @@ int Decode::open(QString filename)
     return 0;
 }
 
-int Decode::decode_packet(int *got_frame, int cached)
+double Decode::fps()
+{
+    if(video_stream && video_stream->avg_frame_rate.den && video_stream->avg_frame_rate.num)
+        return double(video_stream->avg_frame_rate.num) / double(video_stream->avg_frame_rate.den);
+    else
+        return 30;
+}
+
+int Decode::decode_packet(int *got_frame)
 {
     int ret = 0;
     int decoded = pkt.size;
@@ -187,7 +190,7 @@ int Decode::decode_packet(int *got_frame, int cached)
         /* decode video frame */
         ret = avcodec_decode_video2(video_dec_ctx, frame, got_frame, &pkt);
         if (ret < 0) {
-            fprintf(stderr, "Error decoding video frame (%s)\n", av_err2str(ret));
+//            fprintf(stderr, "Error decoding video frame (%s)\n", av_err2str(ret));
             return ret;
         }
         if (*got_frame) {
@@ -195,22 +198,22 @@ int Decode::decode_packet(int *got_frame, int cached)
                 frame->format != pix_fmt) {
                 /* To handle this change, one could call av_image_alloc again and
                  * decode the following frames into another rawvideo file. */
-                fprintf(stderr, "Error: Width, height and pixel format have to be "
-                        "constant in a rawvideo file, but the width, height or "
-                        "pixel format of the input video changed:\n"
-                        "old: vwidth = %d, vheight = %d, format = %s\n"
-                        "new: vwidth = %d, vheight = %d, format = %s\n",
-                        vwidth, vheight, av_get_pix_fmt_name(pix_fmt),
-                        frame->width, frame->height,
-                        av_get_pix_fmt_name(AVPixelFormat(frame->format)));
+//                fprintf(stderr, "Error: Width, height and pixel format have to be "
+//                        "constant in a rawvideo file, but the width, height or "
+//                        "pixel format of the input video changed:\n"
+//                        "old: vwidth = %d, vheight = %d, format = %s\n"
+//                        "new: vwidth = %d, vheight = %d, format = %s\n",
+//                        vwidth, vheight, av_get_pix_fmt_name(pix_fmt),
+//                        frame->width, frame->height,
+//                        av_get_pix_fmt_name(AVPixelFormat(frame->format)));
                 return -1;
             }
-            printf("video_frame%s n:%d coded_n:%d\n",
-                   cached ? "(cached)" : "",
-                   video_frame_count++, frame->coded_picture_number);
+//            printf("video_frame%s n:%d coded_n:%d\n",
+//                   cached ? "(cached)" : "",
+//                   video_frame_count++, frame->coded_picture_number);
             /* copy decoded frame to destination buffer:
              * this is required since rawvideo expects non aligned data */
-            av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, pix_fmt, vwidth, vheight);
+            av_image_copy(video_dst_data, video_dst_linesize, const_cast<const uint8_t **>(frame->data), frame->linesize, pix_fmt, vwidth, vheight);
             /* write to rawvideo file */
 //            fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
 
@@ -247,7 +250,7 @@ int Decode::decode_packet(int *got_frame, int cached)
         /* decode audio frame */
         ret = avcodec_decode_audio4(audio_dec_ctx, frame, got_frame, &pkt);
         if (ret < 0) {
-            fprintf(stderr, "Error decoding audio frame (%s)\n", av_err2str(ret));
+//            fprintf(stderr, "Error decoding audio frame (%s)\n", av_err2str(ret));
             return ret;
         }
         /* Some audio decoders decode only part of the packet, and have to be
@@ -256,11 +259,11 @@ int Decode::decode_packet(int *got_frame, int cached)
          * Also, some decoders might over-read the packet. */
         decoded = FFMIN(ret, pkt.size);
         if (*got_frame) {
-            size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(AVSampleFormat(frame->format));
-            printf("audio_frame%s n:%d nb_samples:%d pts:%s\n",
-                   cached ? "(cached)" : "",
-                   audio_frame_count++, frame->nb_samples,
-                   av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
+//            size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(AVSampleFormat(frame->format));
+//            printf("audio_frame%s n:%d nb_samples:%d pts:%s\n",
+//                   cached ? "(cached)" : "",
+//                   audio_frame_count++, frame->nb_samples,
+//                   av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
             /* Write the raw audio data samples of the first plane. This works
              * fine for packed formats (e.g. AV_SAMPLE_FMT_S16). However,
              * most audio decoders output planar audio, which uses a separate

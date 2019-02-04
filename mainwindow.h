@@ -40,6 +40,8 @@ private:
     Oscilloscope* oscilloscope = nullptr;
     Oscilloscope* oscilloscopeTest = nullptr;
     Decode* decode = nullptr;
+
+    void log(const QString text);
 };
 
 #endif // MAINWINDOW_H

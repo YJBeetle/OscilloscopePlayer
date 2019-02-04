@@ -23,6 +23,7 @@ public:
 
     void run();
     int open(QString filename);
+    double fps();
 
 signals:
 
@@ -47,18 +48,7 @@ private:
     /* 音频 */
     SwrContext* audio_swr_ctx = nullptr;
 
-
-
-
-
-
-
-
-
-    int decode_packet(int *got_frame, int cached);
-
-
-
+    int decode_packet(int *got_frame);
 };
 
 #endif // DECODE_H
