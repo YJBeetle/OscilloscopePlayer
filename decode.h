@@ -2,6 +2,9 @@
 #define DECODE_H
 
 #include <QThread>
+#include <QQueue>
+#include <QImage>
+#include <QBuffer>
 
 extern "C"
 {
@@ -25,6 +28,8 @@ public:
     int open(QString filename);
     AVRational fps();
 
+    QQueue<QImage> video;
+    QQueue<QBuffer> audio;
 signals:
 
 public slots:

@@ -116,9 +116,16 @@ void MainWindow::on_pushButtonPlay_clicked()
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
         {
             i++;
-//            qDebug() << double(time.elapsed()) / 1000;
-
+            //            qDebug() << double(time.elapsed()) / 1000;
+            if(!decode->video.isEmpty())
+            {
+                ui->videoViewer->image = decode->video.dequeue();
+                ui->videoViewer->update();
+            }
+            else
+                log("丢帧");
         }
+        //QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
         QCoreApplication::processEvents();
         QTest::qSleep(1000 * double(fps.den) / double(fps.num) / 10);   //休息 每帧时间/10 ms
     }

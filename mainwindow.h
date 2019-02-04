@@ -36,8 +36,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-//    QQueue<QImage> video;
-//    QQueue<char*> audio;
     QList<QAudioDeviceInfo> audioDeviceInfoList;
     Oscilloscope* oscilloscope = nullptr;
     Oscilloscope* oscilloscopeTest = nullptr;

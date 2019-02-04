@@ -12,7 +12,7 @@ public:
     explicit VideoViewer(QWidget *parent = nullptr);
     ~VideoViewer();
 
-    QImage *image = nullptr;
+    QImage image;
 
 signals:
 

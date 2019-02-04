@@ -213,34 +213,22 @@ int Decode::decode_packet(int *got_frame)
             //输出帧信息
             printf("video_frame n:%d coded_n:%d\n",
                    video_frame_count++, frame->coded_picture_number);
-            /* 将解码后的帧复制到目标缓冲区：这是必需的，因为非对齐数据 */
-            av_image_copy(video_dst_data, video_dst_linesize, const_cast<const uint8_t **>(frame->data), frame->linesize, pix_fmt, vwidth, vheight);
+            /* 将解码后的帧复制到目标缓冲区：这是必需的，因为需要对齐数据 */
+            //av_image_copy(video_dst_data, video_dst_linesize, const_cast<const uint8_t **>(frame->data), frame->linesize, pix_fmt, vwidth, vheight);
             /* 写入rawvideo文件 */
             //fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
-
-
-
-
-
-
-
-
-            //            auto image = new QImage(frame->width, frame->height, QImage::Format_RGB32);
-            //            for (int y = 0; y < frame->height; y++)
-            //            {
-            //                for(int x = 0; x < frame->width; x++)
-            //                {
-            //                    int s = y * frame->linesize[0] + x;
-            //                    QColor color(frame->data[0][s], frame->data[0][s+1], frame->data[0][s+2], frame->data[0][s+3]);
-            //                    image->setPixelColor(x, y, color);
-            //                }
-            //            }
-            //            if(this->ui->videoViewer->image) delete this->ui->videoViewer->image;
-            //            this->ui->videoViewer->image = image;
-
-            //            this->ui->videoViewer->update();
-            //    //        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-            //            QCoreApplication::processEvents();
+            //生成QImage
+            QImage image(frame->width, frame->height, QImage::Format_RGB32);
+            for (int y = 0; y < frame->height; y++)
+            {
+                for(int x = 0; x < frame->width; x++)
+                {
+                    int s = y * frame->linesize[0] + x;
+                    QColor color(frame->data[0][s], frame->data[0][s+1], frame->data[0][s+2], frame->data[0][s+3]);
+                    image.setPixelColor(x, y, color);
+                }
+            }
+            video.enqueue(image);
         }
     }
     else if (pkt.stream_index == audio_stream_idx)  //是音频包
