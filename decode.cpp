@@ -84,12 +84,12 @@ int Decode::open(QString filename)
                         video_convert_frame = av_frame_alloc(); //帧
                         if (!video_convert_frame)
                             return 8;  //无法分配帧
-                        unsigned char* out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_RGBA, video_width, video_height, 1));
+                        unsigned char* out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGRA, video_width, video_height, 1));
                         if (!out_buffer)
                             return 8;  //无法分配
-                        av_image_fill_arrays(video_convert_frame->data, video_convert_frame->linesize, out_buffer, AV_PIX_FMT_RGBA, video_width, video_height, 1);
+                        av_image_fill_arrays(video_convert_frame->data, video_convert_frame->linesize, out_buffer, AV_PIX_FMT_BGRA, video_width, video_height, 1);
                         video_convert_ctx = sws_getContext(video_width, video_height, video_pix_fmt,
-                                                           video_width, video_height, AV_PIX_FMT_RGBA,
+                                                           video_width, video_height, AV_PIX_FMT_BGRA,
                                                            SWS_BICUBIC, NULL, NULL, NULL);
                         if(!video_convert_ctx)
                         {
@@ -233,19 +233,10 @@ int Decode::decode_packet(int *got_frame)
                       frame->data, frame->linesize, 0, video_height,
                       video_convert_frame->data, video_convert_frame->linesize);
             //生成QImage
-            QImage image(frame->width, frame->height, QImage::Format_ARGB32);
-            for (int y = 0; y < frame->height; y++)
-            {
-                for(int x = 0; x < frame->width; x++)
-                {
-                    int offset = y * video_convert_frame->linesize[0] + x * 4;
-                    QColor color(video_convert_frame->data[0][offset],
-                                 video_convert_frame->data[0][offset + 1],
-                                 video_convert_frame->data[0][offset + 2]);
-                    image.setPixelColor(x, y, color);
-                }
-            }
-            video.enqueue(image);
+            QImage image(video_width, video_height, QImage::Format_ARGB32);
+            for (int y = 0; y < video_height; y++)
+                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
+            video.enqueue(image);   //添加到队列尾部
         }
     }
     else if (pkt.stream_index == audio_stream_idx)  //是音频包
