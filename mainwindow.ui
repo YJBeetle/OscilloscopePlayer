@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>824</width>
-    <height>712</height>
+    <width>536</width>
+    <height>568</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,14 +31,17 @@
         <number>0</number>
        </property>
        <item row="1" column="3">
-        <widget class="QCheckBox" name="checkBoxAudio">
-         <property name="text">
-          <string>输出声音</string>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="checked">
-          <bool>true</bool>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
          </property>
-        </widget>
+        </spacer>
        </item>
        <item row="1" column="1">
         <widget class="QPushButton" name="pushButtonPlay">
@@ -53,23 +56,23 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="5">
-        <widget class="QLabel" name="labelTime">
-         <property name="text">
-          <string>&lt;pre&gt; 00:00:00 / 00:00:00 &lt;/pre&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="6">
+       <item row="0" column="0" colspan="5">
         <widget class="QSlider" name="horizontalSlider">
          <property name="maximum">
           <number>0</number>
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QLabel" name="labelTime">
+         <property name="text">
+          <string>&lt;pre&gt; 00:00:00 / 00:00:00 &lt;/pre&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -86,29 +89,13 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="4">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="1" column="2">
-        <widget class="QPushButton" name="pushButtonStop">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>31</height>
-          </size>
-         </property>
+        <widget class="QCheckBox" name="checkBoxAudio">
          <property name="text">
-          <string>停止</string>
+          <string>输出声音</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -391,14 +378,14 @@
      <widget class="VideoViewer" name="videoViewer" native="true">
       <property name="minimumSize">
        <size>
-        <width>400</width>
-        <height>400</height>
+        <width>256</width>
+        <height>256</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>400</width>
-        <height>400</height>
+        <width>256</width>
+        <height>256</height>
        </size>
       </property>
       <property name="styleSheet">
@@ -509,14 +496,14 @@
      <widget class="QGraphicsView" name="graphicsView">
       <property name="minimumSize">
        <size>
-        <width>400</width>
-        <height>400</height>
+        <width>256</width>
+        <height>256</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>400</width>
-        <height>400</height>
+        <width>256</width>
+        <height>256</height>
        </size>
       </property>
       <property name="styleSheet">
