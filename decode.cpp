@@ -201,47 +201,6 @@ AVRational Decode::fps()
     }
 }
 
-//用于图像边缘的检测，图像的平滑
-/*参数
-* img 指向图像的指针
-* tempWidth tempHeight 模板的宽高
-* tempX tempY 模板的中心的x y 坐标
-* temp 指向模板数组的指针 tempCoef 模板的系数
-* img2 为转化后的照片
-*/
-bool Decode::templateChange(QImage *img,int tempWidth,int tempHeight,int tempX,int tempY,float *temp,float tempCoef,QImage *img2)
-{
-    long imgWidth = img->width();
-    long imgHeight = img->height();
-    //用于暂存模板值
-    float result;
-    int endResult;
-
-    for (int y = tempY; y < imgHeight - tempY - tempHeight; y++)
-    {
-        for (int x = tempX; x < imgWidth - tempX - tempWidth; x++)
-        {
-            result = 0;
-            for (int ty = 0; ty < tempHeight; ty++)
-            {
-                for (int tx = 0; tx < tempWidth; tx++)
-                {
-                    int z = qGray(img->pixel(x - tempX + tx, y - tempY + ty));
-                    result += z * temp[ ty * tempWidth + tx];
-                }
-            }
-            result *= tempCoef;
-            endResult = abs(int(result));
-            if (endResult > 255)
-            {
-                endResult = 255;
-            }
-            img2->setPixelColor(x, y, QColor(endResult,endResult,endResult));
-        }
-    }
-    return true;
-}
-
 int Decode::decode_packet(int *got_frame)
 {
     int ret = 0;
@@ -275,13 +234,55 @@ int Decode::decode_packet(int *got_frame)
             printf("video_frame n:%d coded_n:%d\n",
                    video_frame_count++, frame->coded_picture_number);
             //转换色彩
-            sws_scale(video_convert_ctx,
-                      frame->data, frame->linesize, 0, video_height,
-                      video_convert_frame->data, video_convert_frame->linesize);
+//            sws_scale(video_convert_ctx,
+//                      frame->data, frame->linesize, 0, video_height,
+//                      video_convert_frame->data, video_convert_frame->linesize);
+
+            //边缘检测
+            int tempWidth = 3;  //模板的宽高
+            int tempHeight = 3;
+            int tempX = 1;  //模板的中心的x y 坐标
+            int tempY = 1;
+            float temp1[9]={1,0,-1,1,0,-1,1,0,-1};  //模板数组
+            float temp2[9]={-1,-1,-1,0,0,0,1,1,1};
+            //float tempCoef = 1; //模板的系数
+            quint8* img = reinterpret_cast<quint8*>(malloc(video_width * video_height));
+            float result1;  //用于暂存模板值
+            float result2;
+            for (int y = tempY; y < video_height - tempY - tempHeight; y++)
+            {
+                for (int x = tempX; x < video_width - tempX - tempWidth; x++)
+                {
+                    result1 = 0;
+                    result2 = 0;
+                    for (int ty = 0; ty < tempHeight; ty++)
+                    {
+                        for (int tx = 0; tx < tempWidth; tx++)
+                        {
+                            int z = frame->data[0][(y - tempY + ty) * frame->linesize[0] + x - tempX + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                            result1 += z * temp1[ ty * tempWidth + tx];
+                            result2 += z * temp2[ ty * tempWidth + tx];
+                        }
+                    }
+                    //result1 *= tempCoef;
+                    //result2 *= tempCoef;
+                    result1 = abs(int(result1));
+                    result2 = abs(int(result2));
+                    if(result1 < result2)
+                        result1 = result2;
+                    if (result1 > 255)
+                        result1 = 255;
+                    img[y * video_width + x] = result1;
+                }
+            }
+
             //生成QImage
-            QImage image(video_width, video_height, QImage::Format_ARGB32);
+            QImage image(video_width, video_height, QImage::Format_Grayscale8);
             for (int y = 0; y < video_height; y++)
-                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
+                memcpy(image.scanLine(y), img + y * video_width, video_width);
+//            QImage image(video_width, video_height, QImage::Format_ARGB32);
+//            for (int y = 0; y < video_height; y++)
+//                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
 //            for (int y = 0; y < video_height; y++)
 //            {
 //                for(int x = 0; x < video_width; x++)
@@ -293,27 +294,6 @@ int Decode::decode_packet(int *got_frame)
 //                    image.setPixelColor(x, y, color);
 //                }
 //            }
-
-            QImage image1(video_width, video_height, QImage::Format_ARGB32);
-            QImage image2(video_width, video_height, QImage::Format_ARGB32);
-            float temp1[9]={1,0,-1,1,0,-1,1,0,-1};
-            float tempCoef1=1;
-            templateChange(&image,3,3,1,1,temp1,tempCoef1,&image1);
-            float temp2[9]={-1,-1,-1,0,0,0,1,1,1};
-            float tempCoef2=1;
-            templateChange(&image,3,3,1,1,temp2,tempCoef2,&image2);
-
-            for (long y = 0; y < image.height(); y++)
-                for (long x = 0; x < image.width(); x++)
-                    if (qGray(image1.pixel(x, y)) < qGray(image2.pixel(x, y)))
-                    {
-                       image.setPixelColor(x, y, image2.pixelColor(x, y));
-                    }
-                    else
-                    {
-                        image.setPixelColor(x, y, image1.pixelColor(x, y));
-                    }
-
             video.enqueue(image);   //添加到队列尾部
 
             //计算点

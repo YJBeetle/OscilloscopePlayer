@@ -56,7 +56,6 @@ private:
     SwrContext* audio_convert_ctx = nullptr;    //转码
     int audio_frame_count = 0;  //音频计数
 
-    bool templateChange(QImage *img,int tempWidth,int tempHeight,int tempX,int tempY,float *temp,float tempCoef,QImage *img2);
     int decode_packet(int *got_frame);
 };
 
