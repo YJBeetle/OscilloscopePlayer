@@ -353,8 +353,8 @@ int Decode::decode_packet(int *got_frame)
                             {
                                 x = xx;
                                 y = yMin;
-                                points[i].x = 0xffff * x / video_width - 0x8000;
-                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                points[i].x = 0xff * x / video_width;
+                                points[i].y = 0xff * y / video_height;
                                 video_edge[yMin * video_width + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
@@ -369,8 +369,8 @@ int Decode::decode_packet(int *got_frame)
                             {
                                 x = xx;
                                 y = yMax;
-                                points[i].x = 0xffff * x / video_width - 0x8000;
-                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                points[i].x = 0xff * x / video_width;
+                                points[i].y = 0xff * y / video_height;
                                 video_edge[yMax * video_width + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
@@ -385,8 +385,8 @@ int Decode::decode_packet(int *got_frame)
                             {
                                 x = xMin;
                                 y = yy;
-                                points[i].x = 0xffff * x / video_width - 0x8000;
-                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                points[i].x = 0xff * x / video_width;
+                                points[i].y = 0xff * y / video_height;
                                 video_edge[yy * video_width + xMin] = 254; //标记为已使用过了
                                 goto find;
                             }
@@ -401,8 +401,8 @@ int Decode::decode_packet(int *got_frame)
                             {
                                 x = xMax;
                                 y = yy;
-                                points[i].x = 0xffff * x / video_width - 0x8000;
-                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                points[i].x = 0xff * x / video_width;
+                                points[i].y = 0xff * y / video_height;
                                 video_edge[yy * video_width + xMax] = 254; //标记为已使用过了
                                 goto find;
                             }

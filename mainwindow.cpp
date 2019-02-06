@@ -167,7 +167,7 @@ void MainWindow::on_pushButtonPlay_clicked()
                         linePen.setColor(Qt::green);
                         linePen.setWidth(1);
                         line->setPen(linePen);
-                        line->setLine(oscilloscope->points[i].x * 400 / 65536, oscilloscope->points[i].y * 400 / 65536, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].x * 400 / 65536, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].y * 400 / 65536);
+                        line->setLine(oscilloscope->points[i].x, oscilloscope->points[i].y, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].x, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].y);
                         scene->addItem(line);
                     }
                 }
