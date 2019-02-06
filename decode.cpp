@@ -99,7 +99,7 @@ int Decode::open(QString filename)
 //                            return 8;  //无法设置视频色彩转换上下文
 //                        }
                         //边缘检测
-                        video_edge = reinterpret_cast<quint8*>(malloc(video_width * video_height));
+                        video_edge = reinterpret_cast<quint8*>(malloc(256 * 256));
                     }
                     else
                         return 7;   //无法打开视频编解码器
@@ -238,55 +238,50 @@ int Decode::decode_packet(int *got_frame)
             printf("video_frame n:%d coded_n:%d\n",
                    video_frame_count++, frame->coded_picture_number);
             //转换色彩
-            //            sws_scale(video_convert_ctx,
-            //                      frame->data, frame->linesize, 0, video_height,
-            //                      video_convert_frame->data, video_convert_frame->linesize);
+            //sws_scale(video_convert_ctx,
+            //          frame->data, frame->linesize, 0, video_height,
+            //          video_convert_frame->data, video_convert_frame->linesize);
 
             //边缘检测
-            int tempWidth = 3;  //模板的宽高
-            int tempHeight = 3;
-            int tempX = 1;  //模板的中心的x y 坐标
-            int tempY = 1;
             float temp1[9]={1,0,-1,1,0,-1,1,0,-1};  //模板数组
             float temp2[9]={-1,-1,-1,0,0,0,1,1,1};
-            //float tempCoef = 1; //模板的系数
             float result1;  //用于暂存模板值
             float result2;
             int count = 0;  //总点数计数
-            memset(video_edge, 0, video_width * video_height);
-            for (int y = tempY; y < video_height - tempY - tempHeight; y++)
+            memset(video_edge, 0, 256 * 256);
+            for (int y = 1; y < 255 && y < video_height - 1; y++)
             {
-                for (int x = tempX; x < video_width - tempX - tempWidth; x++)
-                {
-                    result1 = 0;
-                    result2 = 0;
-                    for (int ty = 0; ty < tempHeight; ty++)
+                    for (int x = 1; x < 255 && x < video_width - 1; x++)
                     {
-                        for (int tx = 0; tx < tempWidth; tx++)
-                        {
-                            int z = frame->data[0][(y - tempY + ty) * frame->linesize[0] + x - tempX + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
-                            result1 += z * temp1[ ty * tempWidth + tx];
-                            result2 += z * temp2[ ty * tempWidth + tx];
-                        }
+                            result1 = 0;
+                            result2 = 0;
+                            for (int ty = 0; ty < 3; ty++)
+                            {
+                                for (int tx = 0; tx < 3; tx++)
+                                {
+                                    int z = frame->data[0][(y - 1 + ty) * frame->linesize[0] + x - 1 + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                                    result1 += z * temp1[ ty * 3 + tx];
+                                    result2 += z * temp2[ ty * 3 + tx];
+                                }
+                            }
+                            result1 = abs(int(result1));
+                            result2 = abs(int(result2));
+                            if(result1 < result2)
+                                result1 = result2;
+                            if((result1 > 64))  //超过64则为有效点
+                            {
+                                video_edge[y * 256 + x] = 255;
+                                count++;
+                            }
+
                     }
-                    //result1 *= tempCoef;
-                    //result2 *= tempCoef;
-                    result1 = abs(int(result1));
-                    result2 = abs(int(result2));
-                    if(result1 < result2)
-                        result1 = result2;
-                    if((result1 > 64))  //超过64则为有效点
-                    {
-                        video_edge[y * video_width + x] = 255;
-                        count++;
-                    }
-                }
+
             }
 
             //生成QImage
-            QImage image(video_width, video_height, QImage::Format_Grayscale8);
-            for (int y = 0; y < video_height; y++)
-                memcpy(image.scanLine(y), video_edge + y * video_width, video_width);
+            QImage image(256, 256, QImage::Format_Grayscale8);
+            for (int y = 0; y < 256; y++)
+                memcpy(image.scanLine(y), video_edge + y * 256, 256);
             //QImage image(video_width, video_height, QImage::Format_ARGB32);
             //for (int y = 0; y < video_height; y++)
             //    memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
@@ -304,15 +299,15 @@ int Decode::decode_packet(int *got_frame)
             video.enqueue(image);   //添加到队列尾部
 
             //计算路径点
-            QVector<Point> points(count);   //范围： -0x8000 ～ 0x7fff
+            QVector<Point> points(count);
             int x = 0;
             int y = 0;
             for (int i = 0; i < count; i++)
             {
                 int rMax;
                 rMax = (x > y) ? x : y;
-                rMax = (rMax > video_width - x) ? rMax : video_width - x;
-                rMax = (rMax > video_height - y) ? rMax : video_height - y;
+                rMax = (rMax > 256 - x) ? rMax : 256 - x;
+                rMax = (rMax > 256 - y) ? rMax : 256 - y;
 
                 for (int r = 0; r < rMax; r++)
                 {
@@ -329,9 +324,9 @@ int Decode::decode_packet(int *got_frame)
                         xMin = 0;
                         xMinOut = true;
                     }
-                    if(xMax >= video_width)
+                    if(xMax >= 256)
                     {
-                        xMax = video_width - 1;
+                        xMax = 255;
                         xMaxOut = true;
                     }
                     if(yMin < 0)
@@ -339,9 +334,9 @@ int Decode::decode_packet(int *got_frame)
                         yMin = 0;
                         yMinOut = true;
                     }
-                    if(yMax >= video_height)
+                    if(yMax >= 256)
                     {
-                        yMax = video_height - 1;
+                        yMax = 255;
                         yMaxOut = true;
                     }
                     //上边缘
@@ -349,13 +344,11 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int xx = xMin; xx < xMax; xx++)
                         {
-                            if(video_edge[yMin * video_width + xx] == 255)
+                            if(video_edge[yMin * 256 + xx] == 255)
                             {
-                                x = xx;
-                                y = yMin;
-                                points[i].x = 0xff * x / video_width;
-                                points[i].y = 0xff * y / video_height;
-                                video_edge[yMin * video_width + xx] = 254; //标记为已使用过了
+                                points[i].x = x = xx;
+                                points[i].y = y = yMin;
+                                video_edge[yMin * 256 + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -365,13 +358,11 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int xx = xMin; xx < xMax; xx++)
                         {
-                            if(video_edge[yMax * video_width + xx] == 255)
+                            if(video_edge[yMax * 256 + xx] == 255)
                             {
-                                x = xx;
-                                y = yMax;
-                                points[i].x = 0xff * x / video_width;
-                                points[i].y = 0xff * y / video_height;
-                                video_edge[yMax * video_width + xx] = 254; //标记为已使用过了
+                                points[i].x = x = xx;
+                                points[i].y = y = yMax;
+                                video_edge[yMax * 256 + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -381,13 +372,11 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int yy = yMin; yy < yMax; yy++)
                         {
-                            if(video_edge[yy * video_width + xMin] == 255)
+                            if(video_edge[yy * 256 + xMin] == 255)
                             {
-                                x = xMin;
-                                y = yy;
-                                points[i].x = 0xff * x / video_width;
-                                points[i].y = 0xff * y / video_height;
-                                video_edge[yy * video_width + xMin] = 254; //标记为已使用过了
+                                points[i].x = x = xMin;
+                                points[i].y = y = yy;
+                                video_edge[yy * 256 + xMin] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -397,13 +386,11 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int yy = yMin; yy < yMax; yy++)
                         {
-                            if(video_edge[yy * video_width + xMax] == 255)
+                            if(video_edge[yy * 256 + xMax] == 255)
                             {
-                                x = xMax;
-                                y = yy;
-                                points[i].x = 0xff * x / video_width;
-                                points[i].y = 0xff * y / video_height;
-                                video_edge[yy * video_width + xMax] = 254; //标记为已使用过了
+                                points[i].x = x = xMax;
+                                points[i].y = y = yy;
+                                video_edge[yy * 256 + xMax] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
