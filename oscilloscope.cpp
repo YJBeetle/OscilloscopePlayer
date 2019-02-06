@@ -43,7 +43,7 @@ void Oscilloscope::run()
             for(int i = 0; i < points.length() && i * channelCount * 2 < buffer.length(); i++)
             {
                 qToLittleEndian<qint16>(points.at(i).x, bufferPtr + (i * channelCount + channelX) * 2);
-                qToLittleEndian<qint16>(points.at(i).y, bufferPtr + (i * channelCount + channelY) * 2);
+                qToLittleEndian<qint16>(-1 - points.at(i).y, bufferPtr + (i * channelCount + channelY) * 2);
             }
 
             bufferDataSize = points.length() * channelCount * 2;
