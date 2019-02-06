@@ -29,7 +29,6 @@ public:
     int isFormatSupported();
 
     QVector<Point> points;
-    int pointsDataSize = 0;
     bool refresh = false;
 signals:
 

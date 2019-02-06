@@ -272,6 +272,10 @@ int Decode::decode_packet(int *got_frame)
                         result1 = result2;
                     if (result1 > 255)
                         result1 = 255;
+                    if (result1 > 64)
+                        result1 = 0;
+                    else
+                        result1 = 255;
                     img[y * video_width + x] = result1;
                 }
             }

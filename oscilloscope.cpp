@@ -10,7 +10,7 @@ Oscilloscope::Oscilloscope(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int
     format.setChannelCount(channelCount);
 
     if(this->fps == 0) this->fps = 1;
-    points.resize(this->sampleRate / this->fps);    //最大的一次的数据量是 采样率/贞率
+//    points.resize(this->sampleRate / this->fps);    //最大的一次的数据量是 采样率/贞率
     buffer.resize(this->sampleRate / this->fps * this->channelCount * 2);
     output = new QAudioOutput(this->audioDeviceInfo, format, this);
     if(output->bufferSize() < buffer.length() * 2) output->setBufferSize(buffer.length() * 2);  //如果音频缓冲区小于最大buffer的两倍则扩大之。
@@ -39,16 +39,14 @@ void Oscilloscope::run()
         //如果需要刷新，先刷新
         if(refresh)
         {
-            if(pointsDataSize > points.length()) pointsDataSize = points.length();
-
             unsigned char* bufferPtr = reinterpret_cast<unsigned char *>(buffer.data());
-            for(int i = 0; i < pointsDataSize; i++)
+            for(int i = 0; i < points.length() && i * channelCount * 2 < buffer.length(); i++)
             {
                 qToLittleEndian<qint16>(points.at(i).x, bufferPtr + (i * channelCount + channelX) * 2);
                 qToLittleEndian<qint16>(points.at(i).y, bufferPtr + (i * channelCount + channelY) * 2);
             }
 
-            bufferDataSize = pointsDataSize * channelCount * 2;
+            bufferDataSize = points.length() * channelCount * 2;
             if(bufferDataSize > buffer.length()) bufferDataSize = buffer.length();
             refresh = false;
         }
