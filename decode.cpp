@@ -11,6 +11,8 @@ Decode::~Decode()
     avcodec_free_context(&audio_dec_ctx);
     avformat_close_input(&fmt_ctx);
     av_frame_free(&frame);
+//    av_frame_free(&video_convert_frame);
+    if(video_edge) free(video_edge);
 }
 
 void Decode::run()
@@ -81,21 +83,23 @@ int Decode::open(QString filename)
                         video_height = video_dec_ctx->height;
                         video_pix_fmt = video_dec_ctx->pix_fmt;
                         //转换色彩
-                        video_convert_frame = av_frame_alloc(); //帧
-                        if (!video_convert_frame)
-                            return 8;  //无法分配帧
-                        unsigned char* out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGRA, video_width, video_height, 1));
-                        if (!out_buffer)
-                            return 8;  //无法分配
-                        av_image_fill_arrays(video_convert_frame->data, video_convert_frame->linesize, out_buffer, AV_PIX_FMT_BGRA, video_width, video_height, 1);
-                        video_convert_ctx = sws_getContext(video_width, video_height, video_pix_fmt,
-                                                           video_width, video_height, AV_PIX_FMT_BGRA,
-                                                           SWS_BICUBIC, NULL, NULL, NULL);
-                        if(!video_convert_ctx)
-                        {
-                            audio_stream_idx = -1;
-                            return 8;  //无法设置视频色彩转换上下文
-                        }
+//                        video_convert_frame = av_frame_alloc(); //帧
+//                        if (!video_convert_frame)
+//                            return 8;  //无法分配帧
+//                        unsigned char* out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGRA, video_width, video_height, 1));
+//                        if (!out_buffer)
+//                            return 8;  //无法分配
+//                        av_image_fill_arrays(video_convert_frame->data, video_convert_frame->linesize, out_buffer, AV_PIX_FMT_BGRA, video_width, video_height, 1);
+//                        video_convert_ctx = sws_getContext(video_width, video_height, video_pix_fmt,
+//                                                           video_width, video_height, AV_PIX_FMT_BGRA,
+//                                                           SWS_BICUBIC, NULL, NULL, NULL);
+//                        if(!video_convert_ctx)
+//                        {
+//                            audio_stream_idx = -1;
+//                            return 8;  //无法设置视频色彩转换上下文
+//                        }
+                        //边缘检测
+                        video_edge = reinterpret_cast<quint8*>(malloc(video_width * video_height));
                     }
                     else
                         return 7;   //无法打开视频编解码器
@@ -246,9 +250,10 @@ int Decode::decode_packet(int *got_frame)
             float temp1[9]={1,0,-1,1,0,-1,1,0,-1};  //模板数组
             float temp2[9]={-1,-1,-1,0,0,0,1,1,1};
             //float tempCoef = 1; //模板的系数
-            quint8* img = reinterpret_cast<quint8*>(malloc(video_width * video_height));
             float result1;  //用于暂存模板值
             float result2;
+            int count = 0;  //总点数计数
+            memset(video_edge, 0, video_width * video_height);
             for (int y = tempY; y < video_height - tempY - tempHeight; y++)
             {
                 for (int x = tempX; x < video_width - tempX - tempWidth; x++)
@@ -270,35 +275,39 @@ int Decode::decode_packet(int *got_frame)
                     result2 = abs(int(result2));
                     if(result1 < result2)
                         result1 = result2;
-                    img[y * video_width + x] = (result1 > 64) ? 255 : 0;
+                    if((result1 > 64))  //超过64则为有效点
+                    {
+                        video_edge[y * video_width + x] = 255;
+                        count++;
+                    }
                 }
             }
 
             //生成QImage
             QImage image(video_width, video_height, QImage::Format_Grayscale8);
             for (int y = 0; y < video_height; y++)
-                memcpy(image.scanLine(y), img + y * video_width, video_width);
-            //            QImage image(video_width, video_height, QImage::Format_ARGB32);
-            //            for (int y = 0; y < video_height; y++)
-            //                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
-            //            for (int y = 0; y < video_height; y++)
-            //            {
-            //                for(int x = 0; x < video_width; x++)
-            //                {
-            //                    int offset = y * video_convert_frame->linesize[0] + x * 4;
-            //                    QColor color(video_convert_frame->data[0][offset + 2],
-            //                                 video_convert_frame->data[0][offset + 1],
-            //                                 video_convert_frame->data[0][offset + 0]);
-            //                    image.setPixelColor(x, y, color);
-            //                }
-            //            }
+                memcpy(image.scanLine(y), video_edge + y * video_width, video_width);
+            //QImage image(video_width, video_height, QImage::Format_ARGB32);
+            //for (int y = 0; y < video_height; y++)
+            //    memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
+            //for (int y = 0; y < video_height; y++)
+            //{
+            //    for(int x = 0; x < video_width; x++)
+            //    {
+            //        int offset = y * video_convert_frame->linesize[0] + x * 4;
+            //        QColor color(video_convert_frame->data[0][offset + 2],
+            //                     video_convert_frame->data[0][offset + 1],
+            //                     video_convert_frame->data[0][offset + 0]);
+            //        image.setPixelColor(x, y, color);
+            //    }
+            //}
             video.enqueue(image);   //添加到队列尾部
 
-            //计算点
-            QVector<Point> points(1000);    //暂时先设1000个点    //范围： -0x8000 ～ 0x7fff
+            //计算路径点
+            QVector<Point> points(count);   //范围： -0x8000 ～ 0x7fff
             int x = 0;
             int y = 0;
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < count; i++)
             {
                 int rMax;
                 rMax = (x > y) ? x : y;
@@ -340,13 +349,13 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int xx = xMin; xx < xMax; xx++)
                         {
-                            if(img[yMin * video_width + xx] == 255)
+                            if(video_edge[yMin * video_width + xx] == 255)
                             {
                                 x = xx;
                                 y = yMin;
                                 points[i].x = 0xffff * x / video_width - 0x8000;
                                 points[i].y = 0xffff * y / video_height - 0x8000;
-                                img[yMin * video_width + xx] = 254; //标记为已使用过了
+                                video_edge[yMin * video_width + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -356,13 +365,13 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int xx = xMin; xx < xMax; xx++)
                         {
-                            if(img[yMax * video_width + xx] == 255)
+                            if(video_edge[yMax * video_width + xx] == 255)
                             {
                                 x = xx;
                                 y = yMax;
                                 points[i].x = 0xffff * x / video_width - 0x8000;
                                 points[i].y = 0xffff * y / video_height - 0x8000;
-                                img[yMax * video_width + xx] = 254; //标记为已使用过了
+                                video_edge[yMax * video_width + xx] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -372,13 +381,13 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int yy = yMin; yy < yMax; yy++)
                         {
-                            if(img[yy * video_width + xMin] == 255)
+                            if(video_edge[yy * video_width + xMin] == 255)
                             {
                                 x = xMin;
                                 y = yy;
                                 points[i].x = 0xffff * x / video_width - 0x8000;
                                 points[i].y = 0xffff * y / video_height - 0x8000;
-                                img[yy * video_width + xMin] = 254; //标记为已使用过了
+                                video_edge[yy * video_width + xMin] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }
@@ -388,13 +397,13 @@ int Decode::decode_packet(int *got_frame)
                     {
                         for(int yy = yMin; yy < yMax; yy++)
                         {
-                            if(img[yy * video_width + xMax] == 255)
+                            if(video_edge[yy * video_width + xMax] == 255)
                             {
                                 x = xMax;
                                 y = yy;
                                 points[i].x = 0xffff * x / video_width - 0x8000;
                                 points[i].y = 0xffff * y / video_height - 0x8000;
-                                img[yy * video_width + xMax] = 254; //标记为已使用过了
+                                video_edge[yy * video_width + xMax] = 254; //标记为已使用过了
                                 goto find;
                             }
                         }

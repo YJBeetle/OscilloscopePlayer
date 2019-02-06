@@ -49,8 +49,9 @@ private:
     /* 视频 */
     int video_width, video_height;
     AVPixelFormat video_pix_fmt; //像素格式
-    SwsContext* video_convert_ctx = nullptr;    //转码
-    AVFrame* video_convert_frame = nullptr;
+//    SwsContext* video_convert_ctx = nullptr;    //转码
+//    AVFrame* video_convert_frame = nullptr;
+    quint8* video_edge = nullptr;  //储存边缘位图
     int video_frame_count = 0;  //视频计数
     /* 音频 */
     SwrContext* audio_convert_ctx = nullptr;    //转码
