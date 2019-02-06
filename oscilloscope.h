@@ -12,8 +12,8 @@
 #include <QAudioFormat>
 
 struct Point {
-    qint16 x = 0;
-    qint16 y = 0;
+    quint8 x = 0;
+    quint8 y = 0;
 };
 
 class Oscilloscope : public QThread

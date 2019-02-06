@@ -139,7 +139,7 @@ int Decode::open(QString filename)
                     {
                         /* 音频重采样 */    //采样为44100双声道16位整型
                         audio_convert_ctx = swr_alloc_set_opts(nullptr,
-                                                               AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,
+                                                               AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_U8, 44100,
                                                                int64_t(audio_dec_ctx->channel_layout), audio_dec_ctx->sample_fmt, audio_dec_ctx->sample_rate,
                                                                0, nullptr);
                         //audio_convert_ctx = swr_alloc_set_opts(nullptr, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100, audio_stream->codec->channel_layout, audio_stream->codec->sample_fmt, audio_stream->codec->sample_rate, 0, NULL);    //采样为44100双声道16位整型
