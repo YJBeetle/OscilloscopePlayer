@@ -174,11 +174,11 @@ void MainWindow::on_pushButtonPlay_clicked()
                 }
                 else
                     log("示波器丢帧");
-
-                i++;
             }
             else
                 log("丢帧");
+
+            i++;
         }
         //QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
         QCoreApplication::processEvents();
