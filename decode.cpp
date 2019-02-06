@@ -48,7 +48,7 @@ int Decode::open(QString filename)
     }
 
     /* 显示输入文件信息（调试用） */
-//    av_dump_format(fmt_ctx, 0, filename.toLatin1().data(), 0);
+    //    av_dump_format(fmt_ctx, 0, filename.toLatin1().data(), 0);
 
     /* 检索流信息 */
     if (avformat_find_stream_info(fmt_ctx, nullptr) < 0)
@@ -234,9 +234,9 @@ int Decode::decode_packet(int *got_frame)
             printf("video_frame n:%d coded_n:%d\n",
                    video_frame_count++, frame->coded_picture_number);
             //转换色彩
-//            sws_scale(video_convert_ctx,
-//                      frame->data, frame->linesize, 0, video_height,
-//                      video_convert_frame->data, video_convert_frame->linesize);
+            //            sws_scale(video_convert_ctx,
+            //                      frame->data, frame->linesize, 0, video_height,
+            //                      video_convert_frame->data, video_convert_frame->linesize);
 
             //边缘检测
             int tempWidth = 3;  //模板的宽高
@@ -270,13 +270,7 @@ int Decode::decode_packet(int *got_frame)
                     result2 = abs(int(result2));
                     if(result1 < result2)
                         result1 = result2;
-                    if (result1 > 255)
-                        result1 = 255;
-                    if (result1 > 64)
-                        result1 = 0;
-                    else
-                        result1 = 255;
-                    img[y * video_width + x] = result1;
+                    img[y * video_width + x] = (result1 > 64) ? 255 : 0;
                 }
             }
 
@@ -284,32 +278,131 @@ int Decode::decode_packet(int *got_frame)
             QImage image(video_width, video_height, QImage::Format_Grayscale8);
             for (int y = 0; y < video_height; y++)
                 memcpy(image.scanLine(y), img + y * video_width, video_width);
-//            QImage image(video_width, video_height, QImage::Format_ARGB32);
-//            for (int y = 0; y < video_height; y++)
-//                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
-//            for (int y = 0; y < video_height; y++)
-//            {
-//                for(int x = 0; x < video_width; x++)
-//                {
-//                    int offset = y * video_convert_frame->linesize[0] + x * 4;
-//                    QColor color(video_convert_frame->data[0][offset + 2],
-//                                 video_convert_frame->data[0][offset + 1],
-//                                 video_convert_frame->data[0][offset + 0]);
-//                    image.setPixelColor(x, y, color);
-//                }
-//            }
+            //            QImage image(video_width, video_height, QImage::Format_ARGB32);
+            //            for (int y = 0; y < video_height; y++)
+            //                memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
+            //            for (int y = 0; y < video_height; y++)
+            //            {
+            //                for(int x = 0; x < video_width; x++)
+            //                {
+            //                    int offset = y * video_convert_frame->linesize[0] + x * 4;
+            //                    QColor color(video_convert_frame->data[0][offset + 2],
+            //                                 video_convert_frame->data[0][offset + 1],
+            //                                 video_convert_frame->data[0][offset + 0]);
+            //                    image.setPixelColor(x, y, color);
+            //                }
+            //            }
             video.enqueue(image);   //添加到队列尾部
 
             //计算点
-            QVector<Point> points(4);
-            points[0].x = 10000;
-            points[0].y = 10000;
-            points[1].x = 10000;
-            points[1].y = -10000;
-            points[2].x = -10000;
-            points[2].y = -10000;
-            points[3].x = -10000;
-            points[3].y = 10000;
+            QVector<Point> points(1000);    //暂时先设1000个点    //范围： -0x8000 ～ 0x7fff
+            int x = 0;
+            int y = 0;
+            for (int i = 0; i < 1000; i++)
+            {
+                int rMax;
+                rMax = (x > y) ? x : y;
+                rMax = (rMax > video_width - x) ? rMax : video_width - x;
+                rMax = (rMax > video_height - y) ? rMax : video_height - y;
+
+                for (int r = 0; r < rMax; r++)
+                {
+                    int xMin = x - r;
+                    int xMax = x + r;
+                    int yMin = y - r;
+                    int yMax = y + r;
+                    bool xMinOut = false;
+                    bool xMaxOut = false;
+                    bool yMinOut = false;
+                    bool yMaxOut = false;
+                    if(xMin < 0)
+                    {
+                        xMin = 0;
+                        xMinOut = true;
+                    }
+                    if(xMax >= video_width)
+                    {
+                        xMax = video_width - 1;
+                        xMaxOut = true;
+                    }
+                    if(yMin < 0)
+                    {
+                        yMin = 0;
+                        yMinOut = true;
+                    }
+                    if(yMax >= video_height)
+                    {
+                        yMax = video_height - 1;
+                        yMaxOut = true;
+                    }
+                    //上边缘
+                    if(!yMinOut)
+                    {
+                        for(int xx = xMin; xx < xMax; xx++)
+                        {
+                            if(img[yMin * video_width + xx] == 255)
+                            {
+                                x = xx;
+                                y = yMin;
+                                points[i].x = 0xffff * x / video_width - 0x8000;
+                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                img[yMin * video_width + xx] = 254; //标记为已使用过了
+                                goto find;
+                            }
+                        }
+                    }
+                    //下边缘
+                    if(!yMaxOut)
+                    {
+                        for(int xx = xMin; xx < xMax; xx++)
+                        {
+                            if(img[yMax * video_width + xx] == 255)
+                            {
+                                x = xx;
+                                y = yMax;
+                                points[i].x = 0xffff * x / video_width - 0x8000;
+                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                img[yMax * video_width + xx] = 254; //标记为已使用过了
+                                goto find;
+                            }
+                        }
+                    }
+                    //左边缘
+                    if(!xMinOut)
+                    {
+                        for(int yy = yMin; yy < yMax; yy++)
+                        {
+                            if(img[yy * video_width + xMin] == 255)
+                            {
+                                x = xMin;
+                                y = yy;
+                                points[i].x = 0xffff * x / video_width - 0x8000;
+                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                img[yy * video_width + xMin] = 254; //标记为已使用过了
+                                goto find;
+                            }
+                        }
+                    }
+                    //右边缘
+                    if(!xMaxOut)
+                    {
+                        for(int yy = yMin; yy < yMax; yy++)
+                        {
+                            if(img[yy * video_width + xMax] == 255)
+                            {
+                                x = xMax;
+                                y = yy;
+                                points[i].x = 0xffff * x / video_width - 0x8000;
+                                points[i].y = 0xffff * y / video_height - 0x8000;
+                                img[yy * video_width + xMax] = 254; //标记为已使用过了
+                                goto find;
+                            }
+                        }
+                    }
+                }
+find:
+                ;;
+            }
             this->points.enqueue(points);
         }
     }
@@ -343,12 +436,12 @@ int Decode::decode_packet(int *got_frame)
                 return -1;
             }
 
-//            for (i = 0; i < frame->nb_samples; i++)
-//                for (ch = 0; ch < audio_dec_ctx->channels; ch++)
-//                    fwrite(frame->data[ch] + data_size*i, 1, data_size, audio_dst_file);
+            //            for (i = 0; i < frame->nb_samples; i++)
+            //                for (ch = 0; ch < audio_dec_ctx->channels; ch++)
+            //                    fwrite(frame->data[ch] + data_size*i, 1, data_size, audio_dst_file);
 
 
-//            size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(AVSampleFormat(frame->format));
+            //            size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(AVSampleFormat(frame->format));
             /* Write the raw audio data samples of the first plane. This works
              * fine for packed formats (e.g. AV_SAMPLE_FMT_S16). However,
              * most audio decoders output planar audio, which uses a separate
@@ -357,16 +450,16 @@ int Decode::decode_packet(int *got_frame)
              * in these cases.
              * You should use libswresample or libavfilter to convert the frame
              * to packed data. */
-//            fwrite(frame->extended_data[0], 1, unpadded_linesize, audio_dst_file);
+            //            fwrite(frame->extended_data[0], 1, unpadded_linesize, audio_dst_file);
 
 
 
 
 
-//memset(play_buf, sizeof(uint8_t), out_size);
-//            swr_convert(pSwrCtx, &play_buf , out_size, (const uint8_t**)frame->data, frame->nb_samples);
-//            out->write((char*)play_buf, out_size);
-//            QTest::qSleep( 20 );
+            //memset(play_buf, sizeof(uint8_t), out_size);
+            //            swr_convert(pSwrCtx, &play_buf , out_size, (const uint8_t**)frame->data, frame->nb_samples);
+            //            out->write((char*)play_buf, out_size);
+            //            QTest::qSleep( 20 );
 
 
 
