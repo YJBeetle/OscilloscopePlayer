@@ -43,6 +43,7 @@ private slots:
     void on_horizontalSliderMoveX_valueChanged(int value);
     void on_horizontalSliderMoveY_valueChanged(int value);
     void on_horizontalSliderEdge_valueChanged(int value);
+    void on_horizontalSliderScaleY_sliderReleased();
 
 private:
     Ui::MainWindow *ui;
@@ -50,6 +51,8 @@ private:
     QList<QAudioDeviceInfo> audioDeviceInfoList;
     Oscilloscope oscilloscope;
     Decode decode;
+
+    bool ScaleXY = true;    //等比缩放开关
 
     void log(const QString text);
 };

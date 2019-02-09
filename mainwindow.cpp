@@ -323,6 +323,8 @@ void MainWindow::on_comboBoxFPS_currentTextChanged(const QString &arg1)
 
 void MainWindow::on_horizontalSliderScaleX_valueChanged(int value)
 {
+    if(ScaleXY)
+        ui->horizontalSliderScaleY->setValue(value);    //等比缩放
     if(value <= 1000)
         value /= 10;
     else
@@ -357,4 +359,9 @@ void MainWindow::on_horizontalSliderEdge_valueChanged(int value)
 {
     decode.setEdge(value);
     ui->labelEdge->setText("边缘阈值：" + QString::number(value));
+}
+
+void MainWindow::on_horizontalSliderScaleY_sliderReleased()
+{
+    ScaleXY = (ui->horizontalSliderScaleX->value() == ui->horizontalSliderScaleY->value());
 }
