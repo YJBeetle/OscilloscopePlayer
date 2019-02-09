@@ -32,16 +32,19 @@ private slots:
     void on_pushButtonOpen_clicked();
     void on_pushButtonPlay_clicked();
     void on_pushButtonTest_clicked();
-
+    void on_comboBoxList_activated(int index);
+    void on_comboBoxRate_currentTextChanged(const QString &arg1);
     void on_spinBoxChannel_valueChanged(int arg1);
+    void on_spinBoxChannelX_valueChanged(int arg1);
+    void on_spinBoxChannelY_valueChanged(int arg1);
+    void on_comboBoxFPS_currentTextChanged(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;
 
     QList<QAudioDeviceInfo> audioDeviceInfoList;
-    Oscilloscope* oscilloscope = nullptr;
-    Oscilloscope* oscilloscopeTest = nullptr;
-    Decode* decode = nullptr;
+    Oscilloscope oscilloscope;
+    Decode decode;
 
     void log(const QString text);
 };

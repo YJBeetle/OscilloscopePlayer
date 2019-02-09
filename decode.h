@@ -25,11 +25,14 @@ class Decode : public QThread
 {
     Q_OBJECT
 public:
+    enum State{Inited, Ready, Running, Stoped};
+
     explicit Decode(QObject *parent = nullptr);
     ~Decode();
 
     void run();
     int open(QString filename);
+    State state();
     AVRational fps();
 
     QQueue<QImage> video;
@@ -41,6 +44,8 @@ signals:
 public slots:
 
 private:
+    State stateMe = Inited;
+
     AVFormatContext *fmt_ctx = nullptr; //源文件格式信息
     int video_stream_idx = -1, audio_stream_idx = -1;   //流类型
     AVStream *video_stream = nullptr, *audio_stream = nullptr;  //流

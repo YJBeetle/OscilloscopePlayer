@@ -41,6 +41,11 @@ void Decode::run()
 
 }
 
+Decode::State Decode::state()
+{
+    return stateMe;
+}
+
 int Decode::open(QString filename)
 {
     /* 打开文件读取格式 */
@@ -188,6 +193,8 @@ int Decode::open(QString filename)
     av_init_packet(&pkt);
     pkt.data = nullptr;
     pkt.size = 0;
+
+    stateMe = Decode::Ready;
 
     return 0;
 }

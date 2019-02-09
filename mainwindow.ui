@@ -340,6 +340,9 @@
          <property name="text">
           <string>测试输出</string>
          </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item row="3" column="1">

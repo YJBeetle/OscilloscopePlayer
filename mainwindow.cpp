@@ -7,9 +7,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    audioDeviceInfoList = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
-
     //列出音频设备
+    audioDeviceInfoList = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
     int i = 0;
     foreach (const QAudioDeviceInfo &audioDeviceInfo, audioDeviceInfoList)
     {
@@ -21,6 +20,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //设置日志最大行数
     ui->textEditInfo->document()->setMaximumBlockCount(100);
+
+    //示波器初始化
+    if (!oscilloscope.set(audioDeviceInfoList[ui->comboBoxList->currentIndex()],
+                        ui->comboBoxRate->currentText().toInt(),
+                        ui->spinBoxChannel->value(),
+                        ui->spinBoxChannelX->value(),
+                        ui->spinBoxChannelY->value(),
+                        ui->comboBoxFPS->currentText().toInt()))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("音频输出设备不支持当前设置。");
+        msgBox.exec();
+        return;
+    }
 }
 
 MainWindow::~MainWindow()
@@ -43,8 +56,7 @@ void MainWindow::on_pushButtonOpen_clicked()
     {
         log("打开: " + path);
 
-        decode = new Decode();
-        switch(decode->open(path))
+        switch(decode.open(path))
         {
         case 0:
             break;
@@ -60,7 +72,7 @@ void MainWindow::on_pushButtonOpen_clicked()
         }
 
         //显示文件信息
-        auto fps = decode->fps();
+        auto fps = decode.fps();
         log("FPS: " + QString::number(double(fps.num) / double(fps.den), 'f', 2));
 
         //设置UI上的FPS
@@ -70,13 +82,13 @@ void MainWindow::on_pushButtonOpen_clicked()
 
 void MainWindow::on_pushButtonPlay_clicked()
 {
-    if(oscilloscope)
-    {
-        ui->pushButtonPlay->setText("播放");
-        return;
-    }
+//    if(oscilloscope)
+//    {
+//        ui->pushButtonPlay->setText("播放");
+//        return;
+//    }
 
-    if(!decode)
+    if(decode.state() == Decode::Inited)
     {
         QMessageBox::warning(this, "播放失败", "请先打开文件。");
         return;
@@ -93,13 +105,13 @@ void MainWindow::on_pushButtonPlay_clicked()
     audioFormat.setByteOrder(QAudioFormat::LittleEndian);
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(audioFormat)) {
-        QMessageBox::warning(this, "播放失败", "不支持的音频设置。");
+        QMessageBox::warning(this, "播放失败", "音频设备不支持。");
         return;
     }
     QAudioOutput audioOutput(audioFormat);
 
     //根据帧率设置音频缓冲区
-    auto fps = decode->fps();
+    auto fps = decode.fps();
     QIODevice* audioDevice = audioOutput.start();
 
     int out_size = MAX_AUDIO_FRAME_SIZE*2;
@@ -107,25 +119,10 @@ void MainWindow::on_pushButtonPlay_clicked()
     play_buf = reinterpret_cast<uint8_t*>(av_malloc(size_t(out_size)));
 
     //解码器启动
-    decode->start();
+    decode.start();
 
-    //示波器
-    oscilloscope = new Oscilloscope(audioDeviceInfoList[ui->comboBoxList->currentIndex()],
-                        ui->comboBoxRate->currentText().toInt(),
-                        ui->spinBoxChannel->value(),
-                        ui->spinBoxChannelX->value(),
-                        ui->spinBoxChannelY->value(),
-                        ui->comboBoxFPS->currentText().toInt());
-    //检查示波器输出声卡兼容性
-    if (!oscilloscope->isFormatSupported())
-    {
-        QMessageBox msgBox;
-        msgBox.setText("所选输出设备不支持此设置。");
-        msgBox.exec();
-        return;
-    }
     //示波器输出启动
-    oscilloscope->start();
+    oscilloscope.start();
 
 
     //计时器
@@ -141,19 +138,18 @@ void MainWindow::on_pushButtonPlay_clicked()
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
         {
             //qDebug() << double(time.elapsed()) / 1000;    //显示时间
-            if((!decode->video.isEmpty()) && (!decode->videoEdge.isEmpty()) && (!decode->points.isEmpty()))
+            if((!decode.video.isEmpty()) && (!decode.videoEdge.isEmpty()) && (!decode.points.isEmpty()))
             {
                 //刷新视频图像
-                ui->videoViewer->image = decode->video.dequeue();   //设置视频新图像
+                ui->videoViewer->image = decode.video.dequeue();   //设置视频新图像
                 ui->videoViewer->update();  //刷新视频图像
-                ui->videoViewerEdge->image = decode->videoEdge.dequeue();   //设置视频新图像
+                ui->videoViewerEdge->image = decode.videoEdge.dequeue();   //设置视频新图像
                 ui->videoViewerEdge->update();  //刷新视频图像
 
                 //输出音频
 
                 //刷新示波器输出
-                oscilloscope->points = decode->points.dequeue();
-                oscilloscope->refresh = true;
+                oscilloscope.setPoints(decode.points.dequeue());
             }
             else
                 log("丢帧");
@@ -168,32 +164,15 @@ void MainWindow::on_pushButtonPlay_clicked()
 
 void MainWindow::on_pushButtonTest_clicked()
 {
-    if(oscilloscopeTest)
+    if(!ui->pushButtonTest->isChecked())
     {
-        oscilloscopeTest->stop();
-        free(oscilloscopeTest);
-        oscilloscopeTest = nullptr;
+        oscilloscope.stop();
         ui->pushButtonTest->setText("测试输出");
         return;
     }
 
-    oscilloscopeTest = new Oscilloscope(audioDeviceInfoList[this->ui->comboBoxList->currentIndex()],
-                        this->ui->comboBoxRate->currentText().toInt(),
-                        this->ui->spinBoxChannel->value(),
-                        this->ui->spinBoxChannelX->value(),
-                        this->ui->spinBoxChannelY->value(),
-                        this->ui->comboBoxFPS->currentText().toInt());
-
-    if (!oscilloscopeTest->isFormatSupported())
-    {
-        QMessageBox msgBox;
-        msgBox.setText("所选输出设备不支持此设置。");
-        msgBox.exec();
-        return;
-    }
-
-    //启动示波器输出
-    oscilloscopeTest->start();
+    //示波器输出启动
+    oscilloscope.start();
 
     //设置波
     QVector<Point> points(0x20);
@@ -263,14 +242,74 @@ void MainWindow::on_pushButtonTest_clicked()
     points[0x1e].y=0x60;
     points[0x1f].y=0x70;
 
-    oscilloscopeTest->points = points;
-    oscilloscopeTest->refresh = true;
+    oscilloscope.setPoints(points);
 
     ui->pushButtonTest->setText("停止测试");
+}
+
+void MainWindow::on_comboBoxList_activated(int index)
+{
+    //示波器
+    if (!oscilloscope.setAudioDeviceInfo(audioDeviceInfoList[index]))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("音频输出设备不支持当前设置。");
+        msgBox.exec();
+        return;
+    }
+}
+
+void MainWindow::on_comboBoxRate_currentTextChanged(const QString &arg1)
+{
+    int rate = arg1.toInt();
+    if(rate <= 0)
+    {
+        rate = 1;
+    }
+    //示波器
+    if (!oscilloscope.setSampleRate(rate))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("音频输出设备不支持当前设置。");
+        msgBox.exec();
+        return;
+    }
 }
 
 void MainWindow::on_spinBoxChannel_valueChanged(int arg1)
 {
     ui->spinBoxChannelX->setMaximum(arg1 - 1);
     ui->spinBoxChannelY->setMaximum(arg1 - 1);
+
+    //示波器
+    if (!oscilloscope.setChannelCount(arg1))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("音频输出设备不支持当前设置。");
+        msgBox.exec();
+        return;
+    }
+}
+
+void MainWindow::on_spinBoxChannelX_valueChanged(int arg1)
+{
+    //示波器
+    oscilloscope.setChannelX(arg1);
+}
+
+void MainWindow::on_spinBoxChannelY_valueChanged(int arg1)
+{
+    //示波器
+    oscilloscope.setChannelY(arg1);
+}
+
+void MainWindow::on_comboBoxFPS_currentTextChanged(const QString &arg1)
+{
+    int fps = arg1.toInt();
+    if(fps <= 0)
+    {
+        fps = 1;
+    }
+    //示波器
+    oscilloscope.setFPS(fps);
 }
