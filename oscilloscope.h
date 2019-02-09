@@ -44,6 +44,7 @@ private:
     QIODevice* device = nullptr;
     QByteArray buffer;
     int bufferDataSize = 0;
+//    QByteArray bufferFrame;
 
     int sampleRate;
     int channelCount;
