@@ -138,7 +138,7 @@ void Oscilloscope::run()
     while(1)
     {
         //退出检测
-        if(stopMe || output->state() == QAudio::StoppedState)
+        if(stopMe)
         {
             output->stop();
             delete output;
@@ -150,9 +150,9 @@ void Oscilloscope::run()
         //如果需要刷新，先刷新
         if(refresh)
         {
+            refresh = false;
             memcpy(buffer, bufferRefresh, size_t(bufferRefreshLen));
             bufferLen = bufferRefreshLen;
-            refresh = false;
         }
 
         //输出

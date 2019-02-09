@@ -59,7 +59,7 @@ private:
     int bufferLen = 0;
     char* bufferRefresh = nullptr;
     int bufferRefreshLen = 0;
-    bool refresh = false;       //当 refresh == true 时候，线程将会用 bufferRefresh 的 bufferRefreshLen 长度内容复制到 buffer 中去
+    QAtomicInteger<bool> refresh = false;       //当 refresh == true 时候，线程将会用 bufferRefresh 的 bufferRefreshLen 长度内容复制到 buffer 中去
     //QByteArray bufferFrame;   //框
 
 };

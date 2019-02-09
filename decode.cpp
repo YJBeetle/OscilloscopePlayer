@@ -22,31 +22,37 @@ void Decode::set(int scaleX, int scaleY, int moveX, int moveY, int edge)
     this->moveX = moveX;
     this->moveY = moveY;
     this->edge = edge;
+    refresh = true;
 }
 
 void Decode::setScaleX(int scaleX)
 {
-    this->scaleX = scaleX;
+    this->scaleXrefresh = scaleX;
+    refresh = true;
 }
 
 void Decode::setScaleY(int scaleY)
 {
-    this->scaleY = scaleY;
+    this->scaleYrefresh = scaleY;
+    refresh = true;
 }
 
 void Decode::setMoveX(int moveX)
 {
-    this->moveX = moveX;
+    this->moveXrefresh = moveX;
+    refresh = true;
 }
 
 void Decode::setMoveY(int moveY)
 {
-    this->moveY = moveY;
+    this->moveYrefresh = moveY;
+    refresh = true;
 }
 
 void Decode::setEdge(int edge)
 {
-    this->edge = edge;
+    this->edgeRefresh = edge;
+    refresh = true;
 }
 
 void Decode::run()
@@ -282,6 +288,17 @@ int Decode::decode_packet(int *got_frame)
             //sws_scale(video_convert_ctx,
             //          frame->data, frame->linesize, 0, video_height,
             //          video_convert_frame->data, video_convert_frame->linesize);
+
+            //检查刷新
+            if(refresh)
+            {
+                refresh = false;
+                scaleX = scaleXrefresh;
+                scaleY = scaleYrefresh;
+                moveX = moveXrefresh;
+                moveY = moveYrefresh;
+                edge = edgeRefresh;
+            }
 
             //边缘检测
             float temp1[9]={1,0,-1,1,0,-1,1,0,-1};  //模板数组

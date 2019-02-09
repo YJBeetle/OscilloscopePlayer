@@ -6,6 +6,7 @@
 #include <QQueue>
 #include <QImage>
 #include <QBuffer>
+#include <atomic>
 
 extern "C"
 {
@@ -57,6 +58,12 @@ private:
     int moveX = 0;
     int moveY = 0;
     int edge = 64;
+    int scaleXrefresh = 100;
+    int scaleYrefresh = 100;
+    int moveXrefresh = 0;
+    int moveYrefresh = 0;
+    int edgeRefresh = 64;
+    QAtomicInteger<bool> refresh = false;
 
     AVFormatContext *fmt_ctx = nullptr; //源文件格式信息
     int video_stream_idx = -1, audio_stream_idx = -1;   //流类型
