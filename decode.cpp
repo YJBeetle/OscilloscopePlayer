@@ -12,7 +12,41 @@ Decode::~Decode()
     avformat_close_input(&fmt_ctx);
     av_frame_free(&frame);
 //    av_frame_free(&video_convert_frame);
-    if(video_edge) free(video_edge);
+    if(video_edge) delete video_edge;
+}
+
+void Decode::set(int scaleX, int scaleY, int moveX, int moveY, int edge)
+{
+    this->scaleX = scaleX;
+    this->scaleY = scaleY;
+    this->moveX = moveX;
+    this->moveY = moveY;
+    this->edge = edge;
+}
+
+void Decode::setScaleX(int scaleX)
+{
+    this->scaleX = scaleX;
+}
+
+void Decode::setScaleY(int scaleY)
+{
+    this->scaleY = scaleY;
+}
+
+void Decode::setMoveX(int moveX)
+{
+    this->moveX = moveX;
+}
+
+void Decode::setMoveY(int moveY)
+{
+    this->moveY = moveY;
+}
+
+void Decode::setEdge(int edge)
+{
+    this->edge = edge;
 }
 
 void Decode::run()
@@ -104,7 +138,7 @@ int Decode::open(QString filename)
 //                            return 8;  //无法设置视频色彩转换上下文
 //                        }
                         //边缘检测
-                        video_edge = reinterpret_cast<quint8*>(malloc(256 * 256));
+                        video_edge = new quint8[256 * 256];
                     }
                     else
                         return 7;   //无法打开视频编解码器
@@ -220,7 +254,7 @@ int Decode::decode_packet(int *got_frame)
 
     //检查队列长度
     auto fps = this->fps();
-    if(video.size() > fps.num / fps.den)    //缓存1s，如果队列中已有的超过1s（根据fps）则休息一帧的时间
+    if(video.size() > 4)    //缓存4f，如果队列中已有的超过4f则休息一帧的时间
         QTest::qSleep(1000 * fps.den / fps.num);
     if (pkt.stream_index == video_stream_idx)   //包是视频包
     {
@@ -242,8 +276,8 @@ int Decode::decode_packet(int *got_frame)
             }
 
             //输出帧信息
-            printf("video_frame n:%d coded_n:%d\n",
-                   video_frame_count++, frame->coded_picture_number);
+            //printf("video_frame n:%d coded_n:%d\n",
+            //       video_frame_count++, frame->coded_picture_number);
             //转换色彩
             //sws_scale(video_convert_ctx,
             //          frame->data, frame->linesize, 0, video_height,
@@ -258,30 +292,32 @@ int Decode::decode_packet(int *got_frame)
             memset(video_edge, 0, 256 * 256);
             for (int y = 1; y < 255 && y < video_height - 1; y++)
             {
-                    for (int x = 1; x < 255 && x < video_width - 1; x++)
+                for (int x = 1; x < 255 && x < video_width - 1; x++)
+                {
+                    int xx = video_width / 2 - 256 / 2 + x + moveX;
+                    int yy = video_height / 2 - 256 / 2 + y + moveY;
+                    result1 = 0;
+                    result2 = 0;
+                    for (int ty = 0; ty < 3; ty++)
                     {
-                            result1 = 0;
-                            result2 = 0;
-                            for (int ty = 0; ty < 3; ty++)
-                            {
-                                for (int tx = 0; tx < 3; tx++)
-                                {
-                                    int z = frame->data[0][(y - 1 + ty) * frame->linesize[0] + x - 1 + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
-                                    result1 += z * temp1[ ty * 3 + tx];
-                                    result2 += z * temp2[ ty * 3 + tx];
-                                }
-                            }
-                            result1 = abs(int(result1));
-                            result2 = abs(int(result2));
-                            if(result1 < result2)
-                                result1 = result2;
-                            if((result1 > 64))  //超过64则为有效点
-                            {
-                                video_edge[y * 256 + x] = 255;
-                                count++;
-                            }
-
+                        for (int tx = 0; tx < 3; tx++)
+                        {
+                            int z = frame->data[0][(yy - 1 + ty) * frame->linesize[0] + xx - 1 + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                            result1 += z * temp1[ ty * 3 + tx];
+                            result2 += z * temp2[ ty * 3 + tx];
+                        }
                     }
+                    result1 = abs(int(result1));
+                    result2 = abs(int(result2));
+                    if(result1 < result2)
+                        result1 = result2;
+                    if((result1 > 64))  //超过64则为有效点
+                    {
+                        video_edge[y * 256 + x] = 255;
+                        count++;
+                    }
+
+                }
 
             }
 
@@ -289,20 +325,16 @@ int Decode::decode_packet(int *got_frame)
             //QImage image(video_width, video_height, QImage::Format_ARGB32);
             //for (int y = 0; y < video_height; y++)
             //    memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
-            //for (int y = 0; y < video_height; y++)
-            //{
-            //    for(int x = 0; x < video_width; x++)
-            //    {
-            //        int offset = y * video_convert_frame->linesize[0] + x * 4;
-            //        QColor color(video_convert_frame->data[0][offset + 2],
-            //                     video_convert_frame->data[0][offset + 1],
-            //                     video_convert_frame->data[0][offset + 0]);
-            //        image.setPixelColor(x, y, color);
-            //    }
-            //}
             QImage image(256, 256, QImage::Format_Grayscale8);
             for (int y = 0; y < 256; y++)
-                memcpy(image.scanLine(y), frame->data[0] + y * frame->linesize[0], 256);
+            {
+                int yy = video_height / 2 + (-256 / 2 + y) * 100 / scaleY + moveY;
+                for(int x = 0; x < 256; x++)
+                {
+                    int xx = video_width / 2 + (-256 / 2 + x) * 100 / scaleX + moveX;
+                    image.scanLine(y)[x] = frame->data[0][yy * frame->linesize[0] + xx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                }
+            }
             video.enqueue(image);   //添加到队列尾部
             QImage imageEdge(256, 256, QImage::Format_Grayscale8);
             for (int y = 0; y < 256; y++)
@@ -432,9 +464,9 @@ find:
                 return ret;
             }
             //输出帧信息
-            printf("audio_frame n:%d nb_samples:%d pts:%s\n",
-                   audio_frame_count++, frame->nb_samples,
-                   av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
+            //printf("audio_frame n:%d nb_samples:%d pts:%s\n",
+            //       audio_frame_count++, frame->nb_samples,
+            //       av_ts2timestr(frame->pts, &audio_dec_ctx->time_base));
 
             int data_size = av_get_bytes_per_sample(audio_dec_ctx->sample_fmt);
             if (data_size < 0) {

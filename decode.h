@@ -30,6 +30,12 @@ public:
     explicit Decode(QObject *parent = nullptr);
     ~Decode();
 
+    void set(int scaleX, int scaleY, int moveX, int moveY, int edge);
+    void setScaleX(int scaleX);
+    void setScaleY(int scaleY);
+    void setMoveX(int moveX);
+    void setMoveY(int moveY);
+    void setEdge(int edge);
     void run();
     int open(QString filename);
     State state();
@@ -45,6 +51,12 @@ public slots:
 
 private:
     State stateMe = Inited;
+
+    int scaleX = 100;
+    int scaleY = 100;
+    int moveX = 0;
+    int moveY = 0;
+    int edge = 64;
 
     AVFormatContext *fmt_ctx = nullptr; //源文件格式信息
     int video_stream_idx = -1, audio_stream_idx = -1;   //流类型

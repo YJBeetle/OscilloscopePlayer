@@ -21,7 +21,14 @@ MainWindow::MainWindow(QWidget *parent) :
     //设置日志最大行数
     ui->textEditInfo->document()->setMaximumBlockCount(100);
 
-    //示波器初始化
+    //解码器初始设置
+    decode.set( ui->horizontalSliderScaleX->value() <= 1000 ? ui->horizontalSliderScaleX->value() / 10 : ui->horizontalSliderScaleX->value() - 900,
+                ui->horizontalSliderScaleY->value() <= 1000 ? ui->horizontalSliderScaleY->value() / 10 : ui->horizontalSliderScaleY->value() - 900,
+                ui->horizontalSliderMoveX->value(),
+                ui->horizontalSliderMoveY->value(),
+                ui->horizontalSliderEdge->value());
+
+    //示波器初始设置
     if (!oscilloscope.set(audioDeviceInfoList[ui->comboBoxList->currentIndex()],
                         ui->comboBoxRate->currentText().toInt(),
                         ui->spinBoxChannel->value(),
@@ -320,6 +327,7 @@ void MainWindow::on_horizontalSliderScaleX_valueChanged(int value)
         value /= 10;
     else
         value -= 900;
+    decode.setScaleX(value);
     ui->labelScaleX->setText("缩放X：" + QString::number(value) + " %");
 }
 
@@ -329,20 +337,24 @@ void MainWindow::on_horizontalSliderScaleY_valueChanged(int value)
         value /= 10;
     else
         value -= 900;
+    decode.setScaleY(value);
     ui->labelScaleY->setText("缩放Y：" + QString::number(value) + " %");
 }
 
 void MainWindow::on_horizontalSliderMoveX_valueChanged(int value)
 {
+    decode.setMoveX(value);
     ui->labelMoveX->setText("偏移X：" + QString::number(value));
 }
 
 void MainWindow::on_horizontalSliderMoveY_valueChanged(int value)
 {
+    decode.setMoveY(value);
     ui->labelMoveY->setText("偏移Y：" + QString::number(value));
 }
 
 void MainWindow::on_horizontalSliderEdge_valueChanged(int value)
 {
+    decode.setEdge(value);
     ui->labelEdge->setText("边缘阈值：" + QString::number(value));
 }
