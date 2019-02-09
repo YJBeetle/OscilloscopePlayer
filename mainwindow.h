@@ -38,6 +38,11 @@ private slots:
     void on_spinBoxChannelX_valueChanged(int arg1);
     void on_spinBoxChannelY_valueChanged(int arg1);
     void on_comboBoxFPS_currentTextChanged(const QString &arg1);
+    void on_horizontalSliderScaleX_valueChanged(int value);
+    void on_horizontalSliderScaleY_valueChanged(int value);
+    void on_horizontalSliderMoveX_valueChanged(int value);
+    void on_horizontalSliderMoveY_valueChanged(int value);
+    void on_horizontalSliderEdge_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;

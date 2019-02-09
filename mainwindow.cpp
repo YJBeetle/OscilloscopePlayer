@@ -313,3 +313,36 @@ void MainWindow::on_comboBoxFPS_currentTextChanged(const QString &arg1)
     //示波器
     oscilloscope.setFPS(fps);
 }
+
+void MainWindow::on_horizontalSliderScaleX_valueChanged(int value)
+{
+    if(value <= 1000)
+        value /= 10;
+    else
+        value -= 900;
+    ui->labelScaleX->setText("缩放X：" + QString::number(value) + " %");
+}
+
+void MainWindow::on_horizontalSliderScaleY_valueChanged(int value)
+{
+    if(value <= 1000)
+        value /= 10;
+    else
+        value -= 900;
+    ui->labelScaleY->setText("缩放Y：" + QString::number(value) + " %");
+}
+
+void MainWindow::on_horizontalSliderMoveX_valueChanged(int value)
+{
+    ui->labelMoveX->setText("偏移X：" + QString::number(value));
+}
+
+void MainWindow::on_horizontalSliderMoveY_valueChanged(int value)
+{
+    ui->labelMoveY->setText("偏移Y：" + QString::number(value));
+}
+
+void MainWindow::on_horizontalSliderEdge_valueChanged(int value)
+{
+    ui->labelEdge->setText("边缘阈值：" + QString::number(value));
+}
