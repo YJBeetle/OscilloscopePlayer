@@ -252,6 +252,16 @@ AVRational Decode::fps()
     }
 }
 
+int Decode::width()
+{
+    return video_width;
+}
+
+int Decode::height()
+{
+    return video_height;
+}
+
 int Decode::decode_packet(int *got_frame)
 {
     int ret = 0;

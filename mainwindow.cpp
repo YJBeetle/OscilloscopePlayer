@@ -81,9 +81,18 @@ void MainWindow::on_pushButtonOpen_clicked()
         //显示文件信息
         auto fps = decode.fps();
         log("FPS: " + QString::number(double(fps.num) / double(fps.den), 'f', 2));
+        auto width = decode.width();
+        auto height = decode.height();
+        log("Size: " + QString::number(width) + "x" + QString::number(height));
 
         //设置UI上的FPS
         ui->comboBoxFPS->setCurrentText(QString::number(double(fps.num) / double(fps.den), 'f', 0));    //示波器输出的fps与视频的不同，因为如果一个场景点数过多，则需要更低fps（实际就算点数过多，也会完成一次刷新，只是会丢帧，但是其实也没关系，所以ui上的fps设置主要是是为了预留更合适的音频缓冲区而设定）
+
+        //设置缩放
+        int value = width > height ? 256 * 100 / width : 256 * 100 / height;
+        value = value <= 100 ? value * 10 : value + 900;
+        ScaleXY = true;
+        ui->horizontalSliderScaleX->setValue(value);
     }
 }
 
@@ -323,22 +332,15 @@ void MainWindow::on_comboBoxFPS_currentTextChanged(const QString &arg1)
 
 void MainWindow::on_horizontalSliderScaleX_valueChanged(int value)
 {
-    if(ScaleXY)
-        ui->horizontalSliderScaleY->setValue(value);    //等比缩放
-    if(value <= 1000)
-        value /= 10;
-    else
-        value -= 900;
+    if(ScaleXY) ui->horizontalSliderScaleY->setValue(value);    //等比缩放
+    value = value <= 1000 ? value / 10 : value - 900;
     decode.setScaleX(value);
     ui->labelScaleX->setText("缩放X：" + QString::number(value) + " %");
 }
 
 void MainWindow::on_horizontalSliderScaleY_valueChanged(int value)
 {
-    if(value <= 1000)
-        value /= 10;
-    else
-        value -= 900;
+    value = value <= 1000 ? value / 10 : value - 900;
     decode.setScaleY(value);
     ui->labelScaleY->setText("缩放Y：" + QString::number(value) + " %");
 }

@@ -41,6 +41,8 @@ public:
     int open(QString filename);
     State state();
     AVRational fps();
+    int width();
+    int height();
 
     QQueue<QImage> video;
     QQueue<QImage> videoEdge;
