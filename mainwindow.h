@@ -53,6 +53,7 @@ private:
     Decode decode;
 
     bool ScaleXY = true;    //等比缩放开关
+    enum State{Inited, Ready, Play, Pause, Stop} state;
 
     void log(const QString text);
 };

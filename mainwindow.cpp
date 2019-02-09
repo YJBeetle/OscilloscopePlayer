@@ -83,7 +83,7 @@ void MainWindow::on_pushButtonOpen_clicked()
         log("FPS: " + QString::number(double(fps.num) / double(fps.den), 'f', 2));
         auto width = decode.width();
         auto height = decode.height();
-        log("Size: " + QString::number(width) + "x" + QString::number(height));
+        log("Size: " + QString::number(width) + " x " + QString::number(height));
 
         //设置UI上的FPS
         ui->comboBoxFPS->setCurrentText(QString::number(double(fps.num) / double(fps.den), 'f', 0));    //示波器输出的fps与视频的不同，因为如果一个场景点数过多，则需要更低fps（实际就算点数过多，也会完成一次刷新，只是会丢帧，但是其实也没关系，所以ui上的fps设置主要是是为了预留更合适的音频缓冲区而设定）
@@ -93,21 +93,36 @@ void MainWindow::on_pushButtonOpen_clicked()
         value = value <= 100 ? value * 10 : value + 900;
         ScaleXY = true;
         ui->horizontalSliderScaleX->setValue(value);
+
+        //设置状态
+        state = Ready;
     }
 }
 
 void MainWindow::on_pushButtonPlay_clicked()
 {
-//    if(oscilloscope)
-//    {
-//        ui->pushButtonPlay->setText("播放");
-//        return;
-//    }
-
-    if(decode.state() == Decode::Inited)
+    if(!decode.isReady())
     {
         QMessageBox::warning(this, "播放失败", "请先打开文件。");
         return;
+    }
+
+    switch (state) {
+    case Inited:
+        QMessageBox::warning(this, "播放失败", "请先打开文件。");
+        return;
+    case Pause:
+        state = Play;
+        ui->pushButtonPlay->setText("暂停");
+        return;
+    case Play:
+        state = Pause;
+        ui->pushButtonPlay->setText("播放");
+        return;
+    case Stop:
+        return;
+    case Ready:
+        break;
     }
 
     //设置音频输出
@@ -140,35 +155,45 @@ void MainWindow::on_pushButtonPlay_clicked()
     //示波器输出启动
     oscilloscope.start();
 
-
     //计时器
     QTime time;
     time.start();
     int i = 0;
 
-    //按钮字样
+    //状态设置
+    state = Play;
     ui->pushButtonPlay->setText("暂停");
 
     while(1)
     {
+        if(state == Stop)   //停止检测
+        {
+//            decode.stop();
+            oscilloscope.stop();
+            return;
+        }
+
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
         {
             //qDebug() << double(time.elapsed()) / 1000;    //显示时间
-            if((!decode.video.isEmpty()) && (!decode.videoEdge.isEmpty()) && (!decode.points.isEmpty()))
+            if(state == Play)  //在播放模式
             {
-                //刷新视频图像
-                ui->videoViewer->image = decode.video.dequeue();   //设置视频新图像
-                ui->videoViewer->update();  //刷新视频图像
-                ui->videoViewerEdge->image = decode.videoEdge.dequeue();   //设置视频新图像
-                ui->videoViewerEdge->update();  //刷新视频图像
+                if((!decode.video.isEmpty()) && (!decode.videoEdge.isEmpty()) && (!decode.points.isEmpty()))
+                {
+                    //刷新视频图像
+                    ui->videoViewer->image = decode.video.dequeue();   //设置视频新图像
+                    ui->videoViewer->update();  //刷新视频图像
+                    ui->videoViewerEdge->image = decode.videoEdge.dequeue();   //设置视频新图像
+                    ui->videoViewerEdge->update();  //刷新视频图像
 
-                //输出音频
+                    //输出音频
 
-                //刷新示波器输出
-                oscilloscope.setPoints(decode.points.dequeue());
+                    //刷新示波器输出
+                    oscilloscope.setPoints(decode.points.dequeue());
+                }
+                else
+                    log("丢帧");
             }
-            else
-                log("丢帧");
 
             i++;
         }

@@ -77,13 +77,11 @@ void Decode::run()
     do {
         decode_packet(&got_frame);
     } while (got_frame);
-
-
 }
 
-Decode::State Decode::state()
+bool Decode::isReady()
 {
-    return stateMe;
+    return ready;
 }
 
 int Decode::open(QString filename)
@@ -234,7 +232,7 @@ int Decode::open(QString filename)
     pkt.data = nullptr;
     pkt.size = 0;
 
-    stateMe = Decode::Ready;
+    ready = true;   //已准备好状态
 
     return 0;
 }

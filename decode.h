@@ -26,8 +26,6 @@ class Decode : public QThread
 {
     Q_OBJECT
 public:
-    enum State{Inited, Ready, Running, Stoped};
-
     explicit Decode(QObject *parent = nullptr);
     ~Decode();
 
@@ -39,7 +37,7 @@ public:
     void setEdge(int edge);
     void run();
     int open(QString filename);
-    State state();
+    bool isReady();
     AVRational fps();
     int width();
     int height();
@@ -53,7 +51,7 @@ signals:
 public slots:
 
 private:
-    State stateMe = Inited;
+    bool ready = false;
 
     int scaleX = 100;
     int scaleY = 100;
