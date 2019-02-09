@@ -290,35 +290,50 @@ int Decode::decode_packet(int *got_frame)
             float result2;
             int count = 0;  //总点数计数
             memset(video_edge, 0, 256 * 256);
-            for (int y = 1; y < 255 && y < video_height - 1; y++)
             {
-                for (int x = 1; x < 255 && x < video_width - 1; x++)
+                int y = (1 - moveY - video_height / 2) * scaleY / 100 + 256 / 2;
+                if(y < 0)
+                    y = 0;
+                int yMax = (video_height - 1 - moveY - video_height / 2) * scaleY / 100 + 256 / 2;
+                if(yMax > 256)
+                    yMax = 256;
+                for (; y < yMax; y++)
                 {
-                    int xx = video_width / 2 - 256 / 2 + x + moveX;
-                    int yy = video_height / 2 - 256 / 2 + y + moveY;
-                    result1 = 0;
-                    result2 = 0;
-                    for (int ty = 0; ty < 3; ty++)
+                    int yy = video_height / 2 + (-256 / 2 + y) * 100 / scaleY + moveY;
                     {
-                        for (int tx = 0; tx < 3; tx++)
+                        int x = (1 - moveX - video_width / 2) * scaleX / 100 + 256 / 2;
+                        if(x < 0)
+                            x = 0;
+                        int xMax = (video_width - 1 - moveX - video_width / 2) * scaleX / 100 + 256 / 2;
+                        if(xMax > 256)
+                            xMax = 256;
+                        for(; x < xMax; x++)
                         {
-                            int z = frame->data[0][(yy - 1 + ty) * frame->linesize[0] + xx - 1 + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
-                            result1 += z * temp1[ ty * 3 + tx];
-                            result2 += z * temp2[ ty * 3 + tx];
+                            int xx = video_width / 2 + (-256 / 2 + x) * 100 / scaleX + moveX;
+                            result1 = 0;
+                            result2 = 0;
+                            for (int ty = 0; ty < 3; ty++)
+                            {
+                                for (int tx = 0; tx < 3; tx++)
+                                {
+                                    int z = frame->data[0][(yy - 1 + ty) * frame->linesize[0] + xx - 1 + tx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                                    result1 += z * temp1[ ty * 3 + tx];
+                                    result2 += z * temp2[ ty * 3 + tx];
+                                }
+                            }
+                            result1 = abs(int(result1));
+                            result2 = abs(int(result2));
+                            if(result1 < result2)
+                                result1 = result2;
+                            if((result1 > edge))  //超过阈值则为有效点
+                            {
+                                video_edge[y * 256 + x] = 255;
+                                count++;
+                            }
+
                         }
                     }
-                    result1 = abs(int(result1));
-                    result2 = abs(int(result2));
-                    if(result1 < result2)
-                        result1 = result2;
-                    if((result1 > 64))  //超过64则为有效点
-                    {
-                        video_edge[y * 256 + x] = 255;
-                        count++;
-                    }
-
                 }
-
             }
 
             //生成QImage
@@ -329,11 +344,17 @@ int Decode::decode_packet(int *got_frame)
             for (int y = 0; y < 256; y++)
             {
                 int yy = video_height / 2 + (-256 / 2 + y) * 100 / scaleY + moveY;
-                for(int x = 0; x < 256; x++)
-                {
-                    int xx = video_width / 2 + (-256 / 2 + x) * 100 / scaleX + moveX;
-                    image.scanLine(y)[x] = frame->data[0][yy * frame->linesize[0] + xx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
-                }
+                if(yy < 0 || yy >= video_height)
+                    memset(image.scanLine(y), 0, 256);
+                else
+                    for(int x = 0; x < 256; x++)
+                    {
+                        int xx = video_width / 2 + (-256 / 2 + x) * 100 / scaleX + moveX;
+                        if(xx < 0 || xx >= video_width)
+                            image.scanLine(y)[x] = 0;
+                        else
+                            image.scanLine(y)[x] = frame->data[0][yy * frame->linesize[0] + xx]; //这里我们假装视频是YUV，这里只用Y就是灰度了
+                    }
             }
             video.enqueue(image);   //添加到队列尾部
             QImage imageEdge(256, 256, QImage::Format_Grayscale8);
