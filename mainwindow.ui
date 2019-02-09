@@ -207,7 +207,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <item>
           <property name="text">
@@ -374,25 +374,6 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="VideoViewer" name="videoViewer" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>256</width>
-        <height>256</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>256</width>
-        <height>256</height>
-       </size>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background:rgb(0, 0, 0)</string>
-      </property>
-     </widget>
-    </item>
     <item row="2" column="0">
      <widget class="QWidget" name="widget_3" native="true">
       <layout class="QGridLayout" name="gridLayout_3">
@@ -492,8 +473,8 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QGraphicsView" name="graphicsView">
+    <item row="0" column="0">
+     <widget class="VideoViewer" name="videoViewer" native="true">
       <property name="minimumSize">
        <size>
         <width>256</width>
@@ -509,8 +490,24 @@
       <property name="styleSheet">
        <string notr="true">background:rgb(0, 0, 0)</string>
       </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="VideoViewer" name="videoViewerEdge" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>256</width>
+        <height>256</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>256</width>
+        <height>256</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background:rgb(0, 0, 0)</string>
       </property>
      </widget>
     </item>

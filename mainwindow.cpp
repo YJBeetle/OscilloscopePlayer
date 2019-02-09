@@ -21,9 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //设置日志最大行数
     ui->textEditInfo->document()->setMaximumBlockCount(100);
-
-    //示波器图像绘制部分
-    ui->graphicsView->setScene(scene = new QGraphicsScene(this));  //绑定scene
 }
 
 MainWindow::~MainWindow()
@@ -144,35 +141,19 @@ void MainWindow::on_pushButtonPlay_clicked()
         if(1000 * double(i) * double(fps.den) / double(fps.num) < time.elapsed())
         {
             //qDebug() << double(time.elapsed()) / 1000;    //显示时间
-            if(!decode->video.isEmpty())
+            if((!decode->video.isEmpty()) && (!decode->videoEdge.isEmpty()) && (!decode->points.isEmpty()))
             {
                 //刷新视频图像
                 ui->videoViewer->image = decode->video.dequeue();   //设置视频新图像
                 ui->videoViewer->update();  //刷新视频图像
+                ui->videoViewerEdge->image = decode->videoEdge.dequeue();   //设置视频新图像
+                ui->videoViewerEdge->update();  //刷新视频图像
 
                 //输出音频
 
                 //刷新示波器输出
-                if(!decode->points.isEmpty())
-                {
-                    oscilloscope->points = decode->points.dequeue();
-                    oscilloscope->refresh = true;
-
-                    //屏幕绘制示波器的模拟
-                    scene->clear();
-                    for(int i = 0; i < oscilloscope->points.length(); i++) {
-                        auto line = new QGraphicsLineItem();
-                        // 设置画笔
-                        auto linePen = line->pen();
-                        linePen.setColor(Qt::green);
-                        linePen.setWidth(1);
-                        line->setPen(linePen);
-                        line->setLine(oscilloscope->points[i].x, oscilloscope->points[i].y, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].x, oscilloscope->points[(i > 0) ? (i - 1) : (oscilloscope->points.length() - 1)].y);
-                        scene->addItem(line);
-                    }
-                }
-                else
-                    log("示波器丢帧");
+                oscilloscope->points = decode->points.dequeue();
+                oscilloscope->refresh = true;
             }
             else
                 log("丢帧");

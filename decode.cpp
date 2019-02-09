@@ -279,9 +279,6 @@ int Decode::decode_packet(int *got_frame)
             }
 
             //生成QImage
-            QImage image(256, 256, QImage::Format_Grayscale8);
-            for (int y = 0; y < 256; y++)
-                memcpy(image.scanLine(y), video_edge + y * 256, 256);
             //QImage image(video_width, video_height, QImage::Format_ARGB32);
             //for (int y = 0; y < video_height; y++)
             //    memcpy(image.scanLine(y), video_convert_frame->data[0] + y * video_convert_frame->linesize[0], video_width * 4);
@@ -296,7 +293,14 @@ int Decode::decode_packet(int *got_frame)
             //        image.setPixelColor(x, y, color);
             //    }
             //}
+            QImage image(256, 256, QImage::Format_Grayscale8);
+            for (int y = 0; y < 256; y++)
+                memcpy(image.scanLine(y), frame->data[0] + y * frame->linesize[0], 256);
             video.enqueue(image);   //添加到队列尾部
+            QImage imageEdge(256, 256, QImage::Format_Grayscale8);
+            for (int y = 0; y < 256; y++)
+                memcpy(imageEdge.scanLine(y), video_edge + y * 256, 256);
+            videoEdge.enqueue(imageEdge);   //添加到队列尾部
 
             //计算路径点
             QVector<Point> points(count);

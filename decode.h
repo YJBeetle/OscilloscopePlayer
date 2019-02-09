@@ -33,6 +33,7 @@ public:
     AVRational fps();
 
     QQueue<QImage> video;
+    QQueue<QImage> videoEdge;
     QQueue<QBuffer> audio;
     QQueue<QVector<Point>> points;
 signals:

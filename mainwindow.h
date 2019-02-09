@@ -37,7 +37,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QGraphicsScene* scene;
 
     QList<QAudioDeviceInfo> audioDeviceInfoList;
     Oscilloscope* oscilloscope = nullptr;
