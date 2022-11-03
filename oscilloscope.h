@@ -11,7 +11,7 @@
 #include <QAudioDevice>
 #else
 #include <QAudioDeviceInfo>
-using QAudioDevice = QAudioDeviceInfo
+using QAudioDevice = QAudioDeviceInfo;
 #endif
 #include <QAudioFormat>
 
