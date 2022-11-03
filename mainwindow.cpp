@@ -125,25 +125,8 @@ void MainWindow::on_pushButtonPlay_clicked()
         break;
     }
 
-    //设置音频输出
-    QAudioFormat audioFormat;
-    //audioFormat = QAudioDeviceInfo::defaultOutputDevice().preferredFormat();
-    audioFormat.setSampleRate(44100);
-    audioFormat.setChannelCount(2);
-    audioFormat.setCodec("audio/pcm");
-    audioFormat.setSampleType(QAudioFormat::UnSignedInt);
-    audioFormat.setSampleSize(8);
-    audioFormat.setByteOrder(QAudioFormat::LittleEndian);
-    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-    if (!info.isFormatSupported(audioFormat)) {
-        QMessageBox::warning(this, "播放失败", "音频设备不支持。");
-        return;
-    }
-    QAudioOutput audioOutput(audioFormat);
-
     //根据帧率设置音频缓冲区
     auto fps = decode.fps();
-    QIODevice* audioDevice = audioOutput.start();
 
     int out_size = MAX_AUDIO_FRAME_SIZE*2;
     uint8_t *play_buf = nullptr;
