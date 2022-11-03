@@ -107,8 +107,7 @@ int Decode::open(QString filename)
     {
         video_stream = fmt_ctx->streams[video_stream_idx];   //视频流
         /* 寻找视频流的解码器 */
-        AVCodec* video_dec = nullptr;    //视频流的解码器
-        video_dec = avcodec_find_decoder(video_stream->codecpar->codec_id);
+        const AVCodec* video_dec = avcodec_find_decoder(video_stream->codecpar->codec_id); //视频流的解码器
         if (video_dec)
         {
             /* 为解码器分配编解码器上下文 */
@@ -165,8 +164,7 @@ int Decode::open(QString filename)
     {
         audio_stream = fmt_ctx->streams[audio_stream_idx];   //音频流
         /* 寻找视频流的解码器 */
-        AVCodec* audio_dec = nullptr;    //音频流的解码器
-        audio_dec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
+        const AVCodec* audio_dec = avcodec_find_decoder(audio_stream->codecpar->codec_id); //音频流的解码器
         if (audio_dec)
         {
             /* 为解码器分配编解码器上下文 */
