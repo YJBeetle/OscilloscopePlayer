@@ -6,7 +6,6 @@
 #include <QVector>
 #include <QByteArray>
 #include <QtEndian>
-#include <QTest>
 #include <QAudioOutput>
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>

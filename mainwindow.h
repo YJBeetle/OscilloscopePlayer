@@ -8,7 +8,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
-#include <QTest>
 #include <QAudioOutput>
 #include <QAudioDeviceInfo>
 #include <QAudioFormat>

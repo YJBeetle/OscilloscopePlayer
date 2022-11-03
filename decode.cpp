@@ -267,7 +267,7 @@ int Decode::decode_packet(int *got_frame)
     //检查队列长度
     auto fps = this->fps();
     if(video.size() > 4)    //缓存4f，如果队列中已有的超过4f则休息一帧的时间
-        QTest::qSleep(1000 * fps.den / fps.num);
+        QThread::msleep(1000 * fps.den / fps.num);
     if (pkt.stream_index == video_stream_idx)   //包是视频包
     {
         /* 解码视频帧 */
@@ -542,7 +542,7 @@ find:
             //memset(play_buf, sizeof(uint8_t), out_size);
             //            swr_convert(pSwrCtx, &play_buf , out_size, (const uint8_t**)frame->data, frame->nb_samples);
             //            out->write((char*)play_buf, out_size);
-            //            QTest::qSleep( 20 );
+            //            QThread::msleep( 20 );
 
 
 

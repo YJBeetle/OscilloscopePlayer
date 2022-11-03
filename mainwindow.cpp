@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QTime>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -182,7 +184,7 @@ void MainWindow::on_pushButtonPlay_clicked()
         }
         //QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
         QCoreApplication::processEvents();
-        QTest::qSleep(1000 * double(fps.den) / double(fps.num) / 10);   //休息 每帧时间/10 ms
+        QThread::msleep(1000 * double(fps.den) / double(fps.num) / 10);   //休息 每帧时间/10 ms
     }
 }
 

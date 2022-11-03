@@ -2,7 +2,6 @@
 #define DECODE_H
 
 #include <QThread>
-#include <QTest>
 #include <QQueue>
 #include <QImage>
 #include <QBuffer>

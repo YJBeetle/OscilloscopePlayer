@@ -165,7 +165,7 @@ void Oscilloscope::run()
                 device->write(buffer, bufferLen);
             }
             else    //否则说明缓冲区时间一定大于fps的倒数，所以可以休息一会
-                QTest::qSleep(1000 / fps / 10);  //休息十分之一的帧的时间
+                QThread::msleep(1000 / fps / 10);  //休息十分之一的帧的时间
         }
 
     }
