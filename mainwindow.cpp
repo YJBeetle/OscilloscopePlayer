@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QTime>
+#include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -141,7 +141,7 @@ void MainWindow::on_pushButtonPlay_clicked()
     oscilloscope.start();
 
     //计时器
-    QTime time;
+    QElapsedTimer time;
     time.start();
     int i = 0;
 
