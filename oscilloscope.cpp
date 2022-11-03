@@ -1,5 +1,9 @@
 #include "oscilloscope.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include "QAudioSink"
+#endif
+
 Oscilloscope::Oscilloscope(QObject *parent) : QThread(parent)
 {
     //设置边框数据
@@ -29,10 +33,14 @@ Oscilloscope::Oscilloscope(QObject *parent) : QThread(parent)
     //}
 
     //设置输出格式
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    format.setSampleFormat(QAudioFormat::UInt8);
+#else
     format.setCodec("audio/pcm");
     format.setSampleSize(8);
     format.setSampleType(QAudioFormat::UnSignedInt);
     format.setByteOrder(QAudioFormat::LittleEndian);
+#endif
 }
 
 Oscilloscope::~Oscilloscope()
@@ -40,9 +48,9 @@ Oscilloscope::~Oscilloscope()
     stop();
 }
 
-int Oscilloscope::set(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int channelCount, int channelX, int channelY, int fps)
+int Oscilloscope::set(QAudioDevice audioDevice, int sampleRate, int channelCount, int channelX, int channelY, int fps)
 {
-    this->audioDeviceInfo = audioDeviceInfo;
+    this->audioDevice = audioDevice;
     this->sampleRate = sampleRate;
     format.setSampleRate(sampleRate);
     this->channelCount = channelCount;
@@ -57,9 +65,9 @@ int Oscilloscope::set(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int chan
     return isFormatSupported();
 }
 
-int Oscilloscope::setAudioDeviceInfo(const QAudioDeviceInfo audioDeviceInfo)
+int Oscilloscope::setAudioDevice(const QAudioDevice audioDevice)
 {
-    this->audioDeviceInfo = audioDeviceInfo;
+    this->audioDevice = audioDevice;
     return isFormatSupported();
 }
 
@@ -125,12 +133,16 @@ void Oscilloscope::setPoints(const QVector<Point> points)   //根据点数据计
 
 int Oscilloscope::isFormatSupported()
 {
-    return audioDeviceInfo.isFormatSupported(format);
+    return audioDevice.isFormatSupported(format);
 }
 
 void Oscilloscope::run()
 {
-    auto output = new QAudioOutput(this->audioDeviceInfo, format);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    auto output = new QAudioSink(this->audioDevice, format);
+#else
+    auto output = new QAudioOutput(this->audioDevice, format);
+#endif
     if(output->bufferSize() < bufferMaxSize * 2) output->setBufferSize(bufferMaxSize * 2);  //如果音频缓冲区小于最大buffer的两倍则扩大之。
     auto device = output->start();
 

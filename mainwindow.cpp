@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QMediaDevices>
+#endif
 #include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -10,12 +13,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     //列出音频设备
-    audioDeviceInfoList = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    audioDeviceList = QMediaDevices::audioOutputs();
+#else
+    audioDeviceList = QAudioDevice::availableDevices(QAudio::AudioOutput);
+#endif
     int i = 0;
-    foreach (const QAudioDeviceInfo &audioDeviceInfo, audioDeviceInfoList)
+    foreach (const QAudioDevice &audioDevice, audioDeviceList)
     {
-        this->ui->comboBoxList->addItem(audioDeviceInfo.deviceName());
-        if(audioDeviceInfo == QAudioDeviceInfo::defaultOutputDevice())
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        this->ui->comboBoxList->addItem(audioDevice.description());
+#else
+        this->ui->comboBoxList->addItem(audioDevice.deviceName());
+#endif
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if(audioDevice == QMediaDevices::defaultAudioOutput())
+#else
+        if(audioDevice == QAudioDevice::defaultOutputDevice())
+#endif
             this->ui->comboBoxList->setCurrentIndex(i);
         i++;
     }
@@ -31,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 ui->horizontalSliderEdge->value());
 
     //示波器初始设置
-    if (!oscilloscope.set(audioDeviceInfoList[ui->comboBoxList->currentIndex()],
+    if (!oscilloscope.set(audioDeviceList[ui->comboBoxList->currentIndex()],
                         ui->comboBoxRate->currentText().toInt(),
                         ui->spinBoxChannel->value(),
                         ui->spinBoxChannelX->value(),
@@ -276,7 +291,7 @@ void MainWindow::on_pushButtonTest_clicked()
 void MainWindow::on_comboBoxList_activated(int index)
 {
     //示波器
-    if (!oscilloscope.setAudioDeviceInfo(audioDeviceInfoList[index]))
+    if (!oscilloscope.setAudioDevice(audioDeviceList[index]))
     {
         QMessageBox msgBox;
         msgBox.setText("音频输出设备不支持当前设置。");

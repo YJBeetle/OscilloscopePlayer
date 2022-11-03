@@ -7,7 +7,12 @@
 #include <QByteArray>
 #include <QtEndian>
 #include <QAudioOutput>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QAudioDevice>
+#else
 #include <QAudioDeviceInfo>
+using QAudioDevice = QAudioDeviceInfo
+#endif
 #include <QAudioFormat>
 
 struct Point {
@@ -22,8 +27,8 @@ public:
     explicit Oscilloscope(QObject *parent = nullptr);
     ~Oscilloscope();
 
-    int set(QAudioDeviceInfo audioDeviceInfo, int sampleRate, int channelCount, int channelX, int channelY, int fps);
-    int setAudioDeviceInfo(const QAudioDeviceInfo audioDeviceInfo);
+    int set(QAudioDevice audioDevice, int sampleRate, int channelCount, int channelX, int channelY, int fps);
+    int setAudioDevice(const QAudioDevice audioDevice);
     int setSampleRate(int sampleRate);
     int setChannelCount(int channelCount);
     void setChannelX(int channelX);
@@ -45,7 +50,7 @@ private:
     bool stopMe = false;
     bool stateStart = false;
 
-    QAudioDeviceInfo audioDeviceInfo;
+    QAudioDevice audioDevice;
     int sampleRate;
     int channelCount;
     int channelX;

@@ -9,15 +9,20 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QAudioOutput>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QAudioDevice>
+#else
 #include <QAudioDeviceInfo>
+using QAudioDevice = QAudioDeviceInfo
+#endif
 #include <QAudioFormat>
 
 #include "decode.h"
 #include "oscilloscope.h"
 
-namespace Ui {
-class MainWindow;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class MainWindow; }
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
@@ -47,7 +52,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    QList<QAudioDeviceInfo> audioDeviceInfoList;
+    QList<QAudioDevice> audioDeviceList;
     Oscilloscope oscilloscope;
     Decode decode;
 
