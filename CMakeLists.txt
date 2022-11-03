@@ -82,7 +82,7 @@ endif()
 
 # Deploy Qt
 if(NOT CMAKE_BUILD_TYPE MATCHES Debug)
-    get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
+    get_target_property(_qmake_executable Qt${QT_VERSION_MAJOR}::qmake IMPORTED_LOCATION)
     get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
     if(ANDROID)
         # https://doc.qt.io/qt-6/deployment-android.html
